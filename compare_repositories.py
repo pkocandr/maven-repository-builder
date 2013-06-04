@@ -14,27 +14,30 @@ import maven_repo_util
 def compareArtifacts(localRepoPath, remoteUrl):
     tempDownloadDir = tempfile.mkdtemp()
     regexChecksum = re.compile('(\.sha1$)|(\.md5$)')
+    regexMetadata = re.compile('(maven-metadata.xml)|(\.lastUpdated$)|(_maven.repositories)')
     for root, dirs, files in os.walk(localRepoPath):
-         for filename in files:
-             if regexChecksum.search(filename):
-                 continue
-             filepath = os.path.join(root, filename)
-             relRepoPath = os.path.relpath(filepath, localRepoPath)
-             logging.debug('Checking artifact: %s', relRepoPath)
-             
-             # get checksum of the local file
-             localFileChecksum = maven_repo_util.getSha1Checksum(filepath)
+        for filename in files:
+            if regexChecksum.search(filename):
+                continue
+            if regexMetadata.search(filename):
+                continue
+            filepath = os.path.join(root, filename)
+            relRepoPath = os.path.relpath(filepath, localRepoPath)
+            logging.debug('Checking artifact: %s', relRepoPath)
 
-             # get checksum of remote file
-             tempDownloadFile = os.path.join(tempDownloadDir, relRepoPath)
-             remoteFileUrl = remoteUrl + "/" + relRepoPath
-             maven_repo_util.download(remoteFileUrl, tempDownloadFile)
-             if os.path.exists(tempDownloadFile):
-                 remoteFileChecksum = maven_repo_util.getSha1Checksum(tempDownloadFile)
-                 if (localFileChecksum != remoteFileChecksum):
-                     logging.error('Checksums do not match for artifact %s', relRepoPath)
-             else:
-                 logging.debug('File does not exist in remote repo: %s', relRepoPath)
+            # get checksum of the local file
+            localFileChecksum = maven_repo_util.getSha1Checksum(filepath)
+
+            # get checksum of remote file
+            tempDownloadFile = os.path.join(tempDownloadDir, relRepoPath)
+            remoteFileUrl = remoteUrl + "/" + relRepoPath
+            maven_repo_util.download(remoteFileUrl, tempDownloadFile)
+            if os.path.exists(tempDownloadFile):
+                remoteFileChecksum = maven_repo_util.getSha1Checksum(tempDownloadFile)
+                if (localFileChecksum != remoteFileChecksum):
+                    logging.error('Checksums do not match for artifact %s', relRepoPath)
+            else:
+                logging.debug('File does not exist in remote repo: %s', relRepoPath)
 
 
 def main():
