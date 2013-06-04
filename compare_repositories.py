@@ -84,7 +84,8 @@ def main():
         logging.error('Local repository path must point to the root directory of a local maven repository: %s', localRepoPath)
         sys.exit()
 
-    logging.info('Crawling repository located at: %s', localRepoPath)
+    logging.info('Remote repository URL: %s', options.url)
+    logging.info('Crawling local repository: %s', localRepoPath)
     compareArtifacts(localRepoPath, options.url)
 
 
