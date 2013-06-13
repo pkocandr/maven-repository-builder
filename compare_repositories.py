@@ -11,6 +11,7 @@ import tempfile
 
 import maven_repo_util
 
+
 def compareArtifacts(localRepoPath, remoteUrl):
     tempDownloadDir = tempfile.mkdtemp()
     regexChecksum = re.compile('(\.sha1$)|(\.md5$)')
@@ -47,7 +48,7 @@ def main():
             default='info',
             help='Set the level of log output.  Can be set to debug, info, warning, error, or critical')
     cliOptParser.add_option('-u', '--url',
-            default='http://repo1.maven.org/maven2/', 
+            default='http://repo1.maven.org/maven2/',
             help='URL of the remote repository to use for comparison, defaults to Maven central')
 
     (options, args) = cliOptParser.parse_args()
@@ -58,23 +59,9 @@ def main():
         sys.exit()
 
     localRepoPath = args[0]
-        
-    # Set the log level
-    log_level = options.loglevel.lower()
-    if (log_level == 'debug'):
-        logging.basicConfig(level=logging.DEBUG) 
-    if (log_level == 'info'):
-        logging.basicConfig(level=logging.INFO) 
-    elif (log_level == 'warning'):
-        logging.basicConfig(level=logging.WARNING)
-    elif (log_level == 'error'):
-        logging.basicConfig(level=logging.ERROR)
-    elif (log_level == 'critical'):
-        logging.basicConfig(level=logging.CRITICAL)
-    else:
-        logging.basicConfig(level=logging.INFO)
-        logging.warning('Unrecognized log level: %s  Log level set to info', options.loglevel)
 
+    # Set the log level
+    maven_repo_util.setLogLevel(options.loglevel)
 
     # Read the list of dependencies
     if os.path.isfile(localRepoPath):
@@ -89,6 +76,5 @@ def main():
     compareArtifacts(localRepoPath, options.url)
 
 
-if  __name__ =='__main__':main()
-
-
+if __name__ == '__main__':
+    main()

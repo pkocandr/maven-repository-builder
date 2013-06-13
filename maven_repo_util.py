@@ -55,6 +55,25 @@ def download(url, filePath=None):
     except ValueError as e:
         logging.error('ValueError: %s', e.message)
 
+def setLogLevel(level):
+    """Sets the desired log level."""
+    logLevel = level.lower()
+    if (logLevel == 'debug'):
+        logging.basicConfig(level=logging.DEBUG)
+    elif (logLevel == 'info'):
+        logging.basicConfig(level=logging.INFO)
+    elif (logLevel == 'warning'):
+        logging.basicConfig(level=logging.WARNING)
+    elif (logLevel == 'error'):
+        logging.basicConfig(level=logging.ERROR)
+    elif (logLevel == 'critical'):
+        logging.basicConfig(level=logging.CRITICAL)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.warning('Unrecognized log level: %s  Log level set to info', level)
+    logging.info("Loglevel set to %s", level)
+
+
 def getSha1Checksum(filepath):
     return getChecksum(filepath, hashlib.sha1())
 

@@ -14,6 +14,7 @@ import urlparse
 import maven_repo_util
 from maven_artifact import MavenArtifact
 
+
 def downloadArtifact(artifactUrl, artifactLocalPath):
     if not os.path.exists(artifactLocalPath):
         returnCode = maven_repo_util.download(artifactUrl, artifactLocalPath)
@@ -21,7 +22,7 @@ def downloadArtifact(artifactUrl, artifactLocalPath):
             logging.warning("Remote file not found: " + artifactUrl)
     else:
         logging.debug("Artifact already downloaded: " + artifactUrl)
-    
+
 
 def downloadArtifacts(remoteRepoUrl, localRepoDir, artifact):
     """Download artifact from a remote repository along with pom and source jar"""
@@ -33,13 +34,13 @@ def downloadArtifacts(remoteRepoUrl, localRepoDir, artifact):
     artifactUrl = remoteRepoUrl + '/' + artifact.getArtifactFilepath()
     artifactLocalPath = os.path.join(localRepoDir, artifact.getArtifactFilepath())
     downloadArtifact(artifactUrl, artifactLocalPath)
- 
+
     # Download pom
     if artifact.getArtifactFilename() != artifact.getPomFilename():
         artifactPomUrl = remoteRepoUrl + '/' + artifact.getPomFilepath()
         artifactPomLocalPath = os.path.join(localRepoDir, artifact.getPomFilepath())
         downloadArtifact(artifactPomUrl, artifactPomLocalPath)
-    
+
     # Download sources
     if artifact.getArtifactType() != 'pom' and not artifact.getClassifier():
         artifactSourcesUrl = remoteRepoUrl + '/' + artifact.getSourcesFilepath()
@@ -137,14 +138,14 @@ def main():
     description = ("Generate a Maven repository based on a file (or files) containing "
                    "a list of artifacts.  Each list file must contain a single artifact "
                    "per line in the format groupId:artifactId:fileType:<classifier>:version "
-                   "The example artifact list contains more information. ") 
-                   
+                   "The example artifact list contains more information. ")
+
     cliOptParser = optparse.OptionParser(usage=usage, description=description)
     cliOptParser.add_option('-l', '--loglevel',
             default='info',
             help='Set the level of log output.  Can be set to debug, info, warning, error, or critical')
     cliOptParser.add_option('-u', '--url',
-            default='http://repo1.maven.org/maven2/', 
+            default='http://repo1.maven.org/maven2/',
             help='URL of the remote repository from which artifacts are downloaded')
     cliOptParser.add_option('-o', '--output',
             default='local-maven-repository',
@@ -153,20 +154,7 @@ def main():
     (options, args) = cliOptParser.parse_args()
 
     # Set the log level
-    log_level = options.loglevel.lower()
-    if (log_level == 'debug'):
-        logging.basicConfig(level=logging.DEBUG) 
-    if (log_level == 'info'):
-        logging.basicConfig(level=logging.INFO) 
-    elif (log_level == 'warning'):
-        logging.basicConfig(level=logging.WARNING)
-    elif (log_level == 'error'):
-        logging.basicConfig(level=logging.ERROR)
-    elif (log_level == 'critical'):
-        logging.basicConfig(level=logging.CRITICAL)
-    else:
-        logging.basicConfig(level=logging.INFO)
-        logging.warning('Unrecognized log level: %s  Log level set to info', options.loglevel)
+    maven_repo_util.setLogLevel(options.loglevel)
 
     if len(args) < 1:
         logging.error('Missing required command line argument: path to artifact list file')
@@ -197,6 +185,5 @@ def main():
     logging.info('Repository created in directory: %s', options.output)
 
 
-if  __name__ =='__main__':main()
-
-
+if __name__ == '__main__':
+    main()
