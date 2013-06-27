@@ -23,6 +23,8 @@ Basic Usage
                             downloaded
       -o OUTPUT, --output=OUTPUT
                             Local output directory for the new repository
+      -L LOGFILE
+                            Set the file in which the log output should be written
 
 
 Example Repository List
@@ -45,11 +47,7 @@ contain matching GAVs (artifacts with the same groupId, artifactId, and version)
       -l LOGLEVEL, --loglevel=LOGLEVEL
                             Set the level of log output.  Can be set to debug,
                             info, warning, error, or critical
+      -L LOGFILE, --logfile=LOGFILE
+                            Set the file in which the log output should be
+                            written.
       -u URL, --url=URL     URL of the remote repository to use for comparison
-
-
-
-
-
-
-

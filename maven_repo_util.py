@@ -9,6 +9,7 @@ import shutil
 import urllib2
 import urlparse
 
+
 def download(url, filePath=None):
     """Download the given url to a local file"""
 
@@ -30,7 +31,8 @@ def download(url, filePath=None):
                 openUrl.info()['Content-Disposition'].split(';')))
             if 'filename' in cd:
                 filename = cd['filename'].strip("\"'")
-                if filename: return filename
+                if filename:
+                    return filename
         # if no filename was found above, parse it out of the final URL.
         return os.path.basename(urlparse.urlsplit(openUrl.url)[2])
 
@@ -55,27 +57,33 @@ def download(url, filePath=None):
     except ValueError as e:
         logging.error('ValueError: %s', e.message)
 
-def setLogLevel(level):
+
+def setLogLevel(level, logfile=None):
     """Sets the desired log level."""
     logLevel = level.lower()
     if (logLevel == 'debug'):
-        logging.basicConfig(level=logging.DEBUG)
+        logLevel = logging.DEBUG
     elif (logLevel == 'info'):
-        logging.basicConfig(level=logging.INFO)
+        logLevel = logging.INFO
     elif (logLevel == 'warning'):
-        logging.basicConfig(level=logging.WARNING)
+        logLevel = logging.WARNING
     elif (logLevel == 'error'):
-        logging.basicConfig(level=logging.ERROR)
+        logLevel = logging.ERROR
     elif (logLevel == 'critical'):
-        logging.basicConfig(level=logging.CRITICAL)
+        logLevel = logging.CRITICAL
     else:
-        logging.basicConfig(level=logging.INFO)
+        logLevel = logging.INFO
         logging.warning('Unrecognized log level: %s  Log level set to info', level)
+    if logfile:
+        logging.basicConfig(format='%(levelname)s: %(message)s', level=logLevel, filename=logfile, filemode='a')
+    else:
+        logging.basicConfig(format='%(levelname)s: %(message)s', level=logLevel)
     logging.info("Loglevel set to %s", level)
 
 
 def getSha1Checksum(filepath):
     return getChecksum(filepath, hashlib.sha1())
+
 
 def getChecksum(filepath, sum_constr):
     """Generate a checksums for the file using the given algorithm"""
@@ -89,4 +97,3 @@ def getChecksum(filepath, sum_constr):
                 break
             sum.update(content)
     return sum.hexdigest()
-

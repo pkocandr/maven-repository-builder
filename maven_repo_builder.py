@@ -150,11 +150,13 @@ def main():
     cliOptParser.add_option('-o', '--output',
             default='local-maven-repository',
             help='Local output directory for the new repository')
+    cliOptParser.add_option('-L', '--logfile',
+            help='Set the file in which the log output should be written.')
 
     (options, args) = cliOptParser.parse_args()
 
     # Set the log level
-    maven_repo_util.setLogLevel(options.loglevel)
+    maven_repo_util.setLogLevel(options.loglevel, options.logfile)
 
     if len(args) < 1:
         logging.error('Missing required command line argument: path to artifact list file')
