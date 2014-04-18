@@ -90,6 +90,8 @@ class Configuration:
             if source['type'] == 'dependency-list':
                 if 'recursive' not in source:
                     source['recursive'] = True
+                if 'include-scope' not in source:
+                    source['include-scope'] = None
                 if 'skip-missing' not in source:
                     source['skip-missing'] = True
             elif source['type'] == 'dependency-graph':
