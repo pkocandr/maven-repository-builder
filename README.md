@@ -152,6 +152,9 @@ For an example config with full config structure see [Sample Config](https://git
             *   **recursive** - flag to allow listing the listed dependencies recursively. Default is True.
             *   **skip-missing** - flag to skip missing dependencies and only warn user instead of exiting. Default is
                 True.
+            *   **include-scope** - speicifes scope to use as includeScope parameter when running mvn. For more informations
+                on available values see https://maven.apache.org/plugins/maven-dependency-plugin/list-mojo.html#includeScope
+                Default value is specified by maven-dependency-plugin.
         *   "dependency-graph" - a merged lists of maven dependency graph of selected GAVs provided by AProx. Additional
             artifact source config fields for this type are
             *   **aprox-url** - AProx instance URL (without the API part)

@@ -58,6 +58,7 @@ class ArtifactListBuilder:
                 artifacts = self._listDependencies(source['repo-url'],
                                                    self._parseDepList(source['top-level-gavs']),
                                                    source['recursive'],
+                                                   source['include-scope'],
                                                    source['skip-missing'])
             elif source['type'] == 'dependency-graph':
                 logging.info("Building artifact list from dependency graph of top level GAVs")
@@ -141,12 +142,15 @@ class ArtifactListBuilder:
             logging.debug("Filtering artifacts contained in the tag by GAV patterns list.")
         return self._filterArtifactsByPatterns(artifacts, gavPatterns, None)
 
-    def _listDependencies(self, repoUrls, gavs, recursive, skipmissing):
+    def _listDependencies(self, repoUrls, gavs, recursive, include_scope, skipmissing):
         """
         Loads maven artifacts from mvn dependency:list.
 
         :param repoUrls: URL of the repositories that contains the listed artifacts
         :param gavs: List of top level GAVs
+        :param recursive: runs dependency:list recursively using the previously discovered dependencies if True
+        :param include_scope: defines scope which will be used when running mvn as includeScope parameter, can be None
+                              to use Maven's default  
         :returns: Dictionary where index is MavenArtifact object and value is
                   ArtifactSpec with its repo root URL
         """
@@ -192,6 +196,8 @@ class ArtifactListBuilder:
                                               '-DoutputFile=' + outFile,
                                               '-f', pomFilename,
                                               '-s', settingsFile]
+            if include_scope:
+                args.append("-DincludeScope=%s" % include_scope)
             logging.debug("Running Maven:\n  %s", " ".join(args))
             logging.debug("settings.xml contents: %s", settingsContent)
             mvn = Popen(args, stdout=PIPE)
