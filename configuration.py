@@ -103,6 +103,8 @@ class Configuration:
                     source['preset'] = None
                 if 'patcher-ids' not in source:
                     source['patcher-ids'] = []
+                if 'injected-boms' not in source:
+                    source['injected-boms'] = None
             elif source['type'] == 'repository':
                 if 'included-gav-patterns' not in source:
                     source['included-gav-patterns'] = []

@@ -119,12 +119,13 @@ class AproxApi10(UrlRequester):
                             strWsid, status)
             return False
 
-    def urlmap(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, resolve=True):
+    def urlmap(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, injectedBOMs,
+               resolve=True):
         """
         See urlmap_nocache() for method docs. This is caching version of the method.
         """
         cached = self.get_cached_urlmap(wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds,
-                                        resolve)
+                                        injectedBOMs, resolve)
         if cached:
             logging.info("Using cached version of AProx urlmap for roots %s", "-".join(gavs))
             return json.loads(cached)
@@ -136,7 +137,8 @@ class AproxApi10(UrlRequester):
                                         patcherIds, resolve)
             return json.loads(response)
 
-    def urlmap_nocache(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, resolve=True):
+    def urlmap_nocache(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, injectedBOMs,
+                       resolve=True):
         """
         Requests creation of the urlmap. It creates the configfile, posts it to AProx server
         and process the result, which has following structure:
@@ -175,12 +177,15 @@ class AproxApi10(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param preset: preset used while creating the urlmap
         :param patcherIds: list of patcher ID strings for AProx
+        :param injectedBOMs: list of injected BOMs used with dependency management injection
+                             Maven extension
         :param resolve: flag to tell AProx to run resolve for given roots
         :returns: the requested urlmap
         """
         return json.loads(self.urlmap_response(wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, resolve))
 
-    def urlmap_response(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, resolve=True):
+    def urlmap_response(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, injectedBOMs,
+                        resolve=True):
         """
         Requests creation of the urlmap. It creates the configfile, posts it to AProx server
         and process the result, which has following structure:
@@ -219,6 +224,8 @@ class AproxApi10(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param preset: preset used while creating the urlmap
         :param patcherIds: list of patcher ID strings for AProx
+        :param injectedBOMs: list of injected BOMs used with dependency management injection
+                             Maven extension
         :param resolve: flag to tell AProx to run resolve for given roots
         :returns: the response string of the requested urlmap
         """
@@ -238,6 +245,8 @@ class AproxApi10(UrlRequester):
         request["graphComposition"] = {"graphs": [{"roots": gavs, "preset": preset}]}
         if len(patcherIds):
             request["patcherIds"] = patcherIds
+        if len(injectedBOMs):
+            request["injectedBOMs"] = injectedBOMs
         data = json.dumps(request)
 
         logging.debug("Requesting urlmap with config '%s'", data)
@@ -253,7 +262,8 @@ class AproxApi10(UrlRequester):
                             response.status, response.read())
             return "{}"
 
-    def get_cached_urlmap(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, resolve):
+    def get_cached_urlmap(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds,
+                          injectedBOMs, resolve):
         """
         Gets cache urlmap response if exists for given parameters.
 
@@ -266,10 +276,13 @@ class AproxApi10(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param preset: preset used while creating the urlmap
         :param patcherIds: list of patcher ID strings for AProx
+        :param injectedBOMs: list of injected BOMs used with dependency management injection
+                             Maven extension
         :param resolve: flag to tell AProx to run resolve for given roots
         :returns: the cached response or None if no cached response exists
         """
-        cache_filename = self.get_cache_filename(sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds)
+        cache_filename = self.get_cache_filename(sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds,
+                                                 injectedBOMs)
         if os.path.isfile(cache_filename):
             with open(cache_filename) as cache_file:
                 return cache_file.read()
@@ -278,7 +291,7 @@ class AproxApi10(UrlRequester):
             return None
 
     def store_urlmap_cache(self, response, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds,
-                    resolve):
+                           injectedBOMs, resolve):
         """
         Stores urlmap response to cache.
 
@@ -292,15 +305,18 @@ class AproxApi10(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param preset: preset used while creating the urlmap
         :param patcherIds: list of patcher ID strings for AProx
+        :param injectedBOMs: list of injected BOMs used with dependency management injection
+                             Maven extension
         :param resolve: flag to tell AProx to run resolve for given roots
         """
-        cache_filename = self.get_cache_filename(sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds)
+        cache_filename = self.get_cache_filename(sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds,
+                                                 injectedBOMs)
         if not os.path.exists(self.CACHE_PATH):
             os.makedirs(self.CACHE_PATH)
         with open(cache_filename, "w") as cache_file:
             cache_file.write(response)
 
-    def get_cache_filename(self, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds):
+    def get_cache_filename(self, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, injectedBOMs):
         """
         Creates a cache filename to use for urlmap request.
 
@@ -312,10 +328,11 @@ class AproxApi10(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param preset: preset used while creating the urlmap
         :param patcherIds: list of patcher ID strings for AProx
-        :param resolve: flag to tell AProx to run resolve for given roots
+        :param injectedBOMs: list of injected BOMs used with dependency management injection
+                             Maven extension
         """
-        cache_filename = "%s_%s_%s_%s_%s_%s" % (sourceKey, "-".join(gavs), addclassifiers, "-".join(excludedSources),
-                                               preset, "-".join(patcherIds))
+        cache_filename = "%s_%s_%s_%s_%s_%s_%s" % (sourceKey, "-".join(gavs), addclassifiers, "-".join(excludedSources),
+                                               preset, "-".join(patcherIds), "-".join(injectedBOMs))
         if len(cache_filename) > 250:
             sha256 = hashlib.sha256(cache_filename)
             cache_filename = "%s_%s" % ("-".join(gavs), sha256.hexdigest())
