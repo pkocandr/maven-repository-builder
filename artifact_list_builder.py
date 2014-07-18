@@ -71,7 +71,8 @@ class ArtifactListBuilder:
                                                       self._parseDepList(source['top-level-gavs']),
                                                       source['excluded-sources'],
                                                       source['preset'],
-                                                      source['patcher-ids'])
+                                                      source['patcher-ids'],
+                                                      source['injected-boms'])
             elif source['type'] == 'repository':
                 logging.info("Building artifact list from repository %s", source['repo-url'])
                 artifacts = self._listRepository(source['repo-url'],
@@ -262,7 +263,7 @@ class ArtifactListBuilder:
         return artifacts
 
     def _listDependencyGraph(self, aproxUrl, wsid, sourceKey, gavs, excludedSources=[], preset="sob-build",
-                             patcherIds=[]):
+                             patcherIds=[], injectedBOMs=[]):
         """
         Loads maven artifacts from dependency graph.
 
@@ -274,6 +275,8 @@ class ArtifactListBuilder:
         :param excludedSources: list of excluded sources' keys
         :param preset: preset used while creating the urlmap
         :param patcherIds: list of patcher ID strings for AProx
+        :param injectedBOMs: list of injected BOMs used with dependency management injection
+                             Maven extension
         :returns: Dictionary where index is MavenArtifact object and value is
                   ArtifactSpec with its repo root URL
         """
@@ -293,10 +296,10 @@ class ArtifactListBuilder:
         # Resolve graph MANIFEST for GAVs
         if self.configuration.useCache:
             urlmap = aprox.urlmap(wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources, preset,
-                                  patcherIds)
+                                  patcherIds, injectedBOMs)
         else:
             urlmap = aprox.urlmap_nocache(wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
-                                          preset, patcherIds)
+                                          preset, patcherIds, injectedBOMs)
 
         # parse returned map
         artifacts = {}
