@@ -136,7 +136,7 @@ class AproxApi10(UrlRequester):
                                             injectedBOMs, resolve)
             if response != "{}":
                 self.store_urlmap_cache(response, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset,
-                                        patcherIds, resolve)
+                                        patcherIds, injectedBOMs, resolve)
             return json.loads(response)
 
     def urlmap_nocache(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, injectedBOMs,
