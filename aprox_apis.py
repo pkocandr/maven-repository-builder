@@ -133,7 +133,7 @@ class AproxApi10(UrlRequester):
             return json.loads(cached)
         else:
             response = self.urlmap_response(wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds,
-                                            resolve)
+                                            injectedBOMs, resolve)
             if response != "{}":
                 self.store_urlmap_cache(response, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset,
                                         patcherIds, resolve)
