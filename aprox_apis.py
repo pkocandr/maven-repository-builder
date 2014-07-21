@@ -135,6 +135,8 @@ class AproxApi10(UrlRequester):
         """
         See urlmap_nocache() for method docs. This is caching version of the method.
         """
+        if injectedBOMs == None:
+            injectedBOMs = []
         cached = self.get_cached_urlmap(wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds,
                                         injectedBOMs, resolve)
         if cached:
