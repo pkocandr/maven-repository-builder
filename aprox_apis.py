@@ -143,11 +143,24 @@ class AproxApi10(UrlRequester):
             logging.info("Using cached version of AProx urlmap for roots %s", "-".join(gavs))
             return json.loads(cached)
         else:
+            deleteWS = False
+
+            if not wsid:
+                # Create workspace
+                ws = self.createWorkspace()
+                wsid = ws["id"]
+                deleteWS = True
+
             response = self.urlmap_response(wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds,
                                             injectedBOMs, resolve)
             if response != "{}":
                 self.store_urlmap_cache(response, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset,
                                         patcherIds, injectedBOMs, resolve)
+
+            # cleanup
+            if deleteWS:
+                self.deleteWorkspace(wsid)
+
             return json.loads(response)
 
     def urlmap_nocache(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, preset, patcherIds, injectedBOMs,
