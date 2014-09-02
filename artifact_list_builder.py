@@ -282,16 +282,8 @@ class ArtifactListBuilder:
         """
         aprox = AproxApi10(aproxUrl)
 
-        deleteWS = False
-
         if not preset:
             preset = "sob-build"  # only runtime dependencies
-
-        if not wsid:
-            # Create workspace
-            ws = aprox.createWorkspace()
-            wsid = ws["id"]
-            deleteWS = True
 
         # Resolve graph MANIFEST for GAVs
         if self.configuration.useCache:
@@ -315,10 +307,6 @@ class ArtifactListBuilder:
             (extsAndClass, suffix) = self._getExtensionsAndClassifiers(artifactId, version, filenames)
 
             self._addArtifact(artifacts, groupId, artifactId, version, extsAndClass, suffix, url)
-
-        # cleanup
-        if deleteWS:
-            aprox.deleteWorkspace(wsid)
 
         return artifacts
 
