@@ -10,83 +10,6 @@ from filter import Filter
 from maven_artifact import MavenArtifact
 
 
-def _generateArtifactList(options, args):
-
-    config = Configuration()
-    if options.config or not args:
-        # load configuration
-        logging.info("Loading configuration...")
-        config.load(options)
-    else:
-        # create configuration
-        logging.info("Creating configuration...")
-        config.create(options, args)
-
-    # build list
-    logging.info("Building artifact list...")
-    listBuilder = ArtifactListBuilder(config)
-    artifactList = listBuilder.buildList()
-
-    logging.debug("Generated list contents:")
-    _logAL(artifactList)
-
-    #filter list
-    logging.info("Filtering artifact list...")
-    listFilter = Filter(config)
-    artifactList = listFilter.filter(artifactList)
-
-    logging.debug("Filtered list contents:")
-    _logAL(artifactList)
-
-    logging.info("Artifact list generation done")
-    return artifactList
-
-
-def _logAL(artifactList):
-    for ga in artifactList:
-        priorityList = artifactList[ga]
-        for priority in priorityList:
-            versionList = priorityList[priority]
-            for version in versionList:
-                artSpec = versionList[version]
-                for artType in artSpec.artTypes.keys():
-                    for classifier in artSpec.artTypes[artType].classifiers:
-                        if classifier == "":
-                            logging.debug("  %s:%s:%s", ga, artType, version)
-                        else:
-                            logging.debug("  %s:%s:%s:%s", ga, artType, classifier, version)
-
-
-def generateArtifactList(options, args):
-    """
-    Generates artifact "list" from sources defined in the given configuration in options. The result
-    is dictionary with following structure:
-
-    <repo url> (string)
-      L list of MavenArtifact
-    """
-
-    artifactList = _generateArtifactList(options, args)
-    #build sane structure - url to MavenArtifact list
-    urlToMAList = {}
-    for ga in artifactList:
-        priorityList = artifactList[ga]
-        for priority in priorityList:
-            versionList = priorityList[priority]
-            for version in versionList:
-                artSpec = versionList[version]
-                url = artSpec.url
-                for artType in artSpec.artTypes.keys():
-                    for classifier in artSpec.artTypes[artType].classifiers:
-                        if classifier:
-                            gatcv = "%s:%s:%s:%s" % (ga, artType, classifier, version)
-                        else:
-                            gatcv = "%s:%s:%s" % (ga, artType, version)
-                        artifact = MavenArtifact.createFromGAV(gatcv)
-                        urlToMAList.setdefault(url, []).append(artifact)
-    return urlToMAList
-
-
 def main():
     description = "Generate artifact list from sources defined in the given configuration file"
     cliOptParser = optparse.OptionParser(usage="Usage: %prog -c CONFIG", description=description)
@@ -135,6 +58,83 @@ def main():
     artifactList = _generateArtifactList(options, args)
 
     _printArtifactList(artifactList)
+
+
+def generateArtifactList(options, args):
+    """
+    Generates artifact "list" from sources defined in the given configuration in options. The result
+    is dictionary with following structure:
+
+    <repo url> (string)
+      L list of MavenArtifact
+    """
+
+    artifactList = _generateArtifactList(options, args)
+    #build sane structure - url to MavenArtifact list
+    urlToMAList = {}
+    for ga in artifactList:
+        priorityList = artifactList[ga]
+        for priority in priorityList:
+            versionList = priorityList[priority]
+            for version in versionList:
+                artSpec = versionList[version]
+                url = artSpec.url
+                for artType in artSpec.artTypes.keys():
+                    for classifier in artSpec.artTypes[artType].classifiers:
+                        if classifier:
+                            gatcv = "%s:%s:%s:%s" % (ga, artType, classifier, version)
+                        else:
+                            gatcv = "%s:%s:%s" % (ga, artType, version)
+                        artifact = MavenArtifact.createFromGAV(gatcv)
+                        urlToMAList.setdefault(url, []).append(artifact)
+    return urlToMAList
+
+
+def _generateArtifactList(options, args):
+
+    config = Configuration()
+    if options.config or not args:
+        # load configuration
+        logging.info("Loading configuration...")
+        config.load(options)
+    else:
+        # create configuration
+        logging.info("Creating configuration...")
+        config.create(options, args)
+
+    # build list
+    logging.info("Building artifact list...")
+    listBuilder = ArtifactListBuilder(config)
+    artifactList = listBuilder.buildList()
+
+    logging.debug("Generated list contents:")
+    _logAL(artifactList)
+
+    #filter list
+    logging.info("Filtering artifact list...")
+    listFilter = Filter(config)
+    artifactList = listFilter.filter(artifactList)
+
+    logging.debug("Filtered list contents:")
+    _logAL(artifactList)
+
+    logging.info("Artifact list generation done")
+    return artifactList
+
+
+def _logAL(artifactList):
+    for ga in artifactList:
+        priorityList = artifactList[ga]
+        for priority in priorityList:
+            versionList = priorityList[priority]
+            for version in versionList:
+                artSpec = versionList[version]
+                for artType in artSpec.artTypes.keys():
+                    for classifier in artSpec.artTypes[artType].classifiers:
+                        if classifier == "":
+                            logging.debug("  %s:%s:%s", ga, artType, version)
+                        else:
+                            logging.debug("  %s:%s:%s:%s", ga, artType, classifier, version)
 
 
 def _printArtifactList(artifactList, printFormat="{url}\t{gatcv}"):
