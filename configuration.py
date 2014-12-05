@@ -24,6 +24,7 @@ class Configuration:
     addClassifiers = set()
     gatcvWhitelist = []
     useCache = True
+    analyze = False
 
     def load(self, opts):
         """
@@ -42,6 +43,7 @@ class Configuration:
             self.gatcvWhitelist = maven_repo_util.loadArtifactFile(opts.whitelist)
         if hasattr(opts, "cache"):
             self.useCache = opts.cache
+        self.analyze = (not opts.reportdir == None)
 
         self.loadFromFile(opts.config)
 

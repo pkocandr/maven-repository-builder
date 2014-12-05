@@ -42,6 +42,9 @@ help ()
     echo '                        Name of a file containing GATCV patterns allowing usage of stars'
     echo '                        or regular expressions when enclosed in "r/pattern/". It can force'
     echo '                        inclusion of artifacts with excluded types.'
+    echo '  -R REPORT_DIR'
+    echo '                        Dir where to generate the repository analysis report. If not specified'
+    echo '                        no report will be generated.'
     echo '  -m'
     echo '                        Generate metadata in the created repository'
     echo '  -l LOGLEVEL'
@@ -77,7 +80,7 @@ OUTPUT_REPO="maven-repository"
 # =======================================
 # ====== reading command arguments ======
 # =======================================
-while getopts hc:u:r:a:o:b:l:L:s:x:w:md: OPTION
+while getopts hc:u:r:a:o:b:l:L:s:x:w:R:md: OPTION
 do
     case "${OPTION}" in
         h) HELP=true;;
@@ -90,6 +93,7 @@ do
         w) GATCV_WHITELIST=${OPTARG};;
         o) OUTPUT_DIR=${OPTARG};;
         b) OUTPUT_REPO=${OPTARG};;
+        R) REPORT_DIR=${OPTARG};;
         m) METADATA=true;;
         l) LOGLEVEL=${OPTARG};;
         L) LOGFILE=${OPTARG};;
@@ -123,6 +127,7 @@ isvarset OUTPUT_REPO_DIR && MRB_PARAMS+=("-o") && MRB_PARAMS+=("${OUTPUT_REPO_DI
 isvarset CHECKSUM_MODE && MRB_PARAMS+=("-s") && MRB_PARAMS+=("${CHECKSUM_MODE}")
 isvarset EXCLUDED_TYPES && MRB_PARAMS+=("-x") && MRB_PARAMS+=("${EXCLUDED_TYPES}")
 isvarset GATCV_WHITELIST && MRB_PARAMS+=("-w") && MRB_PARAMS+=("${GATCV_WHITELIST}")
+isvarset REPORT_DIR && MRB_PARAMS+=("-R") && MRB_PARAMS+=("${REPORT_DIR}")
 isvarset LOGLEVEL && MRB_PARAMS+=("-l") && MRB_PARAMS+=("${LOGLEVEL}")
 isvarset LOGFILE && MRB_PARAMS+=("-L") && MRB_PARAMS+=("${LOGFILE}")
 
@@ -130,7 +135,7 @@ isvarset LOGFILE && MRB_PARAMS+=("-L") && MRB_PARAMS+=("${LOGFILE}")
 if [ $# -gt 0 ]; then
     while [ $# -gt 0 ] && [ ${1:0:1} = '-' ]; do
         L=${1:1:2}
-        if [ $L = 'c' ] || [ $L = 'r' ] || [ $L = 'a' ] || [ $L = 'o' ] || [ $L = 'b' ] || [ $L = 'u' ] || [ $L = 's' ] || [ $L = 'x' ] || [ $L = 'w' ] || [ $L = 'l' ] || [ $L = 'L' ] || [ $L = 'd' ] ; then
+        if [ $L = 'c' ] || [ $L = 'r' ] || [ $L = 'a' ] || [ $L = 'o' ] || [ $L = 'b' ] || [ $L = 'u' ] || [ $L = 's' ] || [ $L = 'x' ] || [ $L = 'w' ] || [ $L = 'R' ] || [ $L = 'l' ] || [ $L = 'L' ] || [ $L = 'd' ] ; then
             shift
         fi
         shift

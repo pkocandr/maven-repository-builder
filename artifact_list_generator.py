@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import reporter
 import logging
 import optparse
 
@@ -40,6 +41,18 @@ def main():
         '-w', '--whitelist',
         help='Name of a file containing GATCV patterns allowing usage of stars or regular expressions when enclosed '
              'in "r/pattern/". It can force inclusion of artifacts with excluded types.'
+    )
+    cliOptParser.add_option(
+        "-R", '--reportdir',
+        dest="reportdir",
+        default=None,
+        help='Dir where to generate the repository analysis report. If not specified no report will be generated.'
+    )
+    cliOptParser.add_option(
+        "-N", '--reportname',
+        dest="reportname",
+        default="Maven Repository",
+        help='Name of the repository to be used in the analysis report. It is used only when reportdir value is specified.'
     )
     cliOptParser.add_option(
         '-l', '--loglevel',
@@ -119,6 +132,12 @@ def _generateArtifactList(options, args):
     _logAL(artifactList)
 
     logging.info("Artifact list generation done")
+
+    if options.reportdir:
+        logging.info("Generating repository analysis report")
+        reporter.generate_report(options.reportdir, config.artifactSources, artifactList, options.reportname)
+        logging.info("Report has been generated")
+
     return artifactList
 
 

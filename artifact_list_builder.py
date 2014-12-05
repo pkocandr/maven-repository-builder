@@ -2,7 +2,7 @@ import copy
 import os
 import re
 import logging
-from aprox_apis import AproxApi10
+from aprox_apis import AproxApi
 from multiprocessing.pool import ThreadPool
 from subprocess import Popen
 from subprocess import PIPE
@@ -75,7 +75,8 @@ class ArtifactListBuilder:
                                                       source['excluded-sources'],
                                                       source['preset'],
                                                       source['patcher-ids'],
-                                                      source['injected-boms'])
+                                                      source['injected-boms'],
+                                                      self.configuration.analyze)
             elif source['type'] == 'repository':
                 logging.info("Building artifact list from repository %s", source['repo-url'])
                 artifacts = self._listRepository(source['repo-url'],
@@ -86,8 +87,7 @@ class ArtifactListBuilder:
                 continue
 
             if source["excludedGAVs"]:
-                logging.debug("Filtering excluded GAVs from partial result (priority %i).", priority)
-                self._filterExcludedGAVs(artifacts, source["excludedGAVs"])
+                self._filterExcludedGAVs(artifacts, source["excludedGAVs"], priority)
 
             logging.debug("Placing %d artifacts in the result list", len(artifacts))
             for artifact in artifacts:
@@ -102,16 +102,16 @@ class ArtifactListBuilder:
 
         return artifactList
 
-    def _filterExcludedGAVs(self, artifacts, excludedGAVs):
+    def _filterExcludedGAVs(self, artifacts, excludedGAVs, priority):
         """
         Filter artifactList removing specified GAVs.
 
         :param artifacts: artifact list to be filtered.
         :param excludedGAVs: list of excluded GAVs patterns
+        :param priority: artifact source priority
         :returns: artifact list without artifacts that matched specified GAVs.
         """
-
-        logging.debug("Filtering artifacts with excluded GAVs.")
+        logging.debug("Filtering excluded GAVs from partial result (priority %i).", priority)
         regExps = maven_repo_util.getRegExpsFromStrings(excludedGAVs)
         gavRegExps = []
         gatcvRegExps = []
@@ -314,7 +314,7 @@ class ArtifactListBuilder:
         return artifacts
 
     def _listDependencyGraph(self, aproxUrl, wsid, sourceKey, gavs, excludedSources=[], preset="sob-build",
-                             patcherIds=[], injectedBOMs=[]):
+                             patcherIds=[], injectedBOMs=[], analyze=False):
         """
         Loads maven artifacts from dependency graph.
 
@@ -331,17 +331,22 @@ class ArtifactListBuilder:
         :returns: Dictionary where index is MavenArtifact object and value is
                   ArtifactSpec with its repo root URL
         """
-        aprox = AproxApi10(aproxUrl)
+        aprox = AproxApi(aproxUrl)
 
         if not preset:
             preset = "sob-build"  # only runtime dependencies
 
+        if analyze and not wsid:
+            _wsid = "temp"
+        else:
+            _wsid = wsid
+
         # Resolve graph MANIFEST for GAVs
         if self.configuration.useCache:
-            urlmap = aprox.urlmap(wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources, preset,
+            urlmap = aprox.urlmap(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources, preset,
                                   patcherIds, injectedBOMs)
         else:
-            urlmap = aprox.urlmap_nocache(wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
+            urlmap = aprox.urlmap_nocache(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
                                           preset, patcherIds, injectedBOMs)
 
         # parse returned map
@@ -358,6 +363,50 @@ class ArtifactListBuilder:
             (extsAndClass, suffix) = self._getExtensionsAndClassifiers(artifactId, version, filenames)
 
             self._addArtifact(artifacts, groupId, artifactId, version, extsAndClass, suffix, url)
+
+        if analyze:
+            gas = []
+            for ma in artifacts.keys():
+                ga = ma.getGA()
+                if not ga in gas:
+                    gas.append(ga)
+            if self.configuration.useCache:
+                path_dict = aprox.paths(_wsid, sourceKey, gavs, gas, excludedSources, preset, patcherIds,
+                                        injectedBOMs, False)
+            else:
+                path_dict = aprox.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, preset, patcherIds,
+                                                injectedBOMs, False)
+            if path_dict:
+                for ma in artifacts.keys():
+                    for key in path_dict.keys():
+                        if ma.getGAV() == key:
+                            gav_paths = path_dict[key]
+                            for gav_path in gav_paths:
+                                rel_path = []
+                                for gav_rel in gav_path:
+                                    declaring = MavenArtifact.createFromGAV(gav_rel["declaring"])
+                                    target = MavenArtifact.createFromGAV(gav_rel["target"])
+                                    if gav_rel["rel"] == "DEPENDENCY":
+                                        rel = ArtifactRelationship(declaring, target, gav_rel["rel"], gav_rel["scope"])
+                                    else:
+                                        rel = ArtifactRelationship(declaring, target, gav_rel["rel"])
+                                    rel_path.append(rel)
+    
+                                artifacts[ma].add_path(rel_path)
+            for ma in artifacts.keys():
+                if not artifacts[ma].paths and ma.getGAV() not in gavs:
+                    # create artificial unknown paths from all roots to current artifact 
+                    for root in gavs:
+                        if root != ma.getGAV():
+                            rel_path = [ArtifactRelationship(MavenArtifact.createFromGAV(root), None, None),
+                                        ArtifactRelationship(None, ma, None)]
+                            artifacts[ma].add_path(rel_path)
+
+            if not wsid:
+                try:
+                    aprox.deleteWorkspace(_wsid)
+                except Exception as err:
+                    logging.warning("Workspace deletion failed: %s" % str(err))
 
         return artifacts
 
@@ -806,6 +855,7 @@ class ArtifactSpec():
             self.artTypes = {}
             for artType in artTypes:
                 self.artTypes[artType.artType] = artType
+        self.paths = []
 
     def merge(self, other):
         if other.url and self.url != other.url:
@@ -817,6 +867,15 @@ class ArtifactSpec():
                                  % (str(self.artTypes.keys()), str(other.artTypes.keys())))
 
         self.artTypes.update(other.artTypes)
+        self.paths.extend(other.paths)
+
+    def add_path(self, path):
+        """
+        Adds a relationship path into paths set.
+
+        :param path: a list of artifact relationships from root to the current artifact
+        """
+        self.paths.append(path)
 
     def containsMain(self):
         """
@@ -834,6 +893,26 @@ class ArtifactSpec():
 
     def __repr__(self):
         return "ArtifactSpec(%s, %s)" % (repr(self.url), repr(self.artTypes))
+
+
+class ArtifactRelationship():
+    """
+    Part of relationship path between root artifact and an artifact contained in repository. Each relationship has its
+    type in field rel, declaring artifact and target artifact. When the relationship is of type DEPENDENCY, then also
+    scope is stored.
+    """
+
+    def __init__(self, declaring, target, rel, scope=None):
+        """
+        :param declaring: the declaring artifact
+        :param target: the target artifact
+        :param rel: the relationship type, available values are "PARENT", "DEPENDENCY", "BOM"
+        :param scope: the scope of dependency relationship
+        """
+        self.declaring = declaring
+        self.target = target
+        self.rel = rel
+        self.scope = scope
 
 
 class ArtifactType():

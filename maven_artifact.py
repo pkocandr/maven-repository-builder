@@ -64,6 +64,29 @@ class MavenArtifact:
 
         return result
 
+    @staticmethod
+    def createFromPomPath(path):
+        """
+        Initialize an artifact using a relative pom filepath from a repository root dir.
+
+        :returns: MavenArtifact instance
+        """
+        path_parts = path.split('/')
+        if len(path_parts) < 4:
+            logging.error("Invalid POM path: %s", path)
+            sys.exit(1)
+        groupid = ".".join(path_parts[0:-3])
+        artifactid = path_parts[-3]
+        version = path_parts[-2]
+
+        ma = MavenArtifact(groupid, artifactid, None, version)
+
+        if ma.get_pom_filename() != path_parts[-1]:
+            raise "Found POM filename %s does not match the one generated from the path %s" % (path_parts[-1],
+                                                                                               ma.get_pom_filename())
+
+        return ma
+
     def getArtifactType(self):
         return self.artifactType
 
@@ -147,6 +170,10 @@ class MavenArtifact:
     def getClassifierFilepath(self, classifier, artifactType="jar"):
         """Return teh path to the artifact's classifier file"""
         return self.getDirPath() + self.getClassifierFilename(classifier, artifactType)
+
+    def is_example(self):
+        gav = self.getGAV()
+        return "example" in gav or "quickstart" in gav or "demo" in gav
 
     def isSnapshot(self):
         """Determines if the version of this artifact is a snapshot version."""
