@@ -104,7 +104,7 @@ class Configuration:
                 if 'patcher-ids' not in source:
                     source['patcher-ids'] = []
                 if 'injected-boms' not in source:
-                    source['injected-boms'] = None
+                    source['injected-boms'] = []
             elif source['type'] == 'repository':
                 if 'included-gav-patterns' not in source:
                     source['included-gav-patterns'] = []
@@ -204,6 +204,12 @@ class Configuration:
                         'included-gav-patterns-ref', filePath)
                 source['included-gatcvs'] = self._loadArtifactFileBySourceParameter(source, 'included-gatcvs-ref',
                         filePath)
+
+            source["excludedGAVs"] = []
+            if 'excluded-gav-patterns-ref' in source:
+                for filename in source['excluded-gav-patterns-ref']:
+                    relFilename = self._getRelativeFilename(filename, filePath)
+                    source["excludedGAVs"].extend(maven_repo_util.loadFlatFile(relFilename))
 
             self.artifactSources.append(source)
 

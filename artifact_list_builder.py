@@ -1,3 +1,4 @@
+import copy
 import os
 import re
 import logging
@@ -82,6 +83,10 @@ class ArtifactListBuilder:
                 logging.warning("Unsupported source type: %s", source['type'])
                 continue
 
+            if source["excludedGAVs"]:
+                logging.debug("Filtering excluded GAVs from partial result (priority %i).", priority)
+                self._filterExcludedGAVs(artifacts, source["excludedGAVs"])
+
             logging.debug("Placing %d artifacts in the result list", len(artifacts))
             for artifact in artifacts:
                 ga = artifact.getGA()
@@ -94,6 +99,50 @@ class ArtifactListBuilder:
             logging.debug("The result contains %d GAs so far", len(artifactList))
 
         return artifactList
+
+    def _filterExcludedGAVs(self, artifacts, excludedGAVs):
+        """
+        Filter artifactList removing specified GAVs.
+
+        :param artifacts: artifact list to be filtered.
+        :param excludedGAVs: list of excluded GAVs patterns
+        :returns: artifact list without artifacts that matched specified GAVs.
+        """
+
+        logging.debug("Filtering artifacts with excluded GAVs.")
+        regExps = maven_repo_util.getRegExpsFromStrings(excludedGAVs)
+        gavRegExps = []
+        gatcvRegExps = []
+        for regExp in regExps:
+            if regExp.pattern.count(":") > 2:
+                gatcvRegExps.append(regExp)
+            else:
+                gavRegExps.append(regExp)
+        for artifact in copy.copy(artifacts):
+            gav = artifact.getGAV()
+            artSpec = artifacts[artifact]
+            if maven_repo_util.somethingMatch(gavRegExps, gav):
+                del artifacts[artifact]
+            else:
+                for artType in copy.deepcopy(artSpec.artTypes.keys()):
+                    at = artSpec.artTypes[artType]
+                    for classifier in copy.deepcopy(at.classifiers):
+                        ga = artifact.getGA()
+                        if classifier:
+                            gatcv = "%s:%s:%s:%s" % (ga, artType, classifier, artifact.version)
+                        else:
+                            gatcv = "%s:%s:%s" % (ga, artType, artifact.version)
+                        if maven_repo_util.somethingMatch(gatcvRegExps, gatcv):
+                            logging.debug("Dropping GATCV %s because it matches an excluded GAV pattern.", gatcv)
+                            at.classifiers.remove(classifier)
+                    if not at.classifiers:
+                        logging.debug("Dropping GATV %s:%s:%s because of no classifiers left.", ga, artType,
+                                      artifact.version)
+                        del artSpec.artTypes[artType]
+                if not artSpec.containsMain():
+                    logging.debug("Dropping GAV %s:%s because of no main artifact left.", ga, artifact.version)
+                    del artifacts[artifact]
+        return artifacts
 
     def _listMeadTagArtifacts(self, kojiUrl, downloadRootUrl, tagName, gavPatterns):
         """
