@@ -177,12 +177,12 @@ class Filter:
             logging.debug("Dropping GAV %s:%s from priority %i because it was found in an excluded repository.",
                           ga, artifact.version, priority)
             del artifactList[ga][priority][artifact.version]
-        if not artifactList[ga][priority]:
-            logging.debug("Dropping GA %s from priority %i because of no version left.", ga, priority)
-            del artifactList[ga][priority]
-        if not artifactList[ga]:
-            logging.debug("Dropping GA %s because of no priority left.", ga)
-            del artifactList[ga]
+            if not artifactList[ga][priority]:
+                logging.debug("Dropping GA %s from priority %i because of no version left.", ga, priority)
+                del artifactList[ga][priority]
+            if not artifactList[ga]:
+                logging.debug("Dropping GA %s because of no priority left.", ga)
+                del artifactList[ga]
 
         return artifactList
 
