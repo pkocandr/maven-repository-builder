@@ -69,14 +69,22 @@ class Filter:
                                 else:
                                     gatcv = "%s:%s:%s" % (ga, artType, version)
                                 if maven_repo_util.somethingMatch(gatcvRegExps, gatcv):
+                                    logging.debug("Dropping GATCV %s from priority %i because it matches an excluded "
+                                                  "GAV pattern.", gatcv, priority)
                                     at.classifiers.remove(classifier)
                             if not at.classifiers:
+                                logging.debug("Dropping GATV %s:%s:%s from priority %i because of no classifiers left.",
+                                              ga, artType, version, priority)
                                 del artSpec.artTypes[artType]
                         if not artSpec.containsMain():
+                            logging.debug("Dropping GAV %s:%s from priority %i because of no main artifact left.",
+                                          ga, version, priority)
                             del artifactList[ga][priority][version]
                 if not artifactList[ga][priority]:
+                    logging.debug("Dropping GA %s from priority %i because of no version left.", ga, priority)
                     del artifactList[ga][priority]
             if not artifactList[ga]:
+                logging.debug("Dropping GA %s because of no priority left.", ga)
                 del artifactList[ga]
         return artifactList
 
@@ -97,16 +105,23 @@ class Filter:
                 for version in artifactList[ga][priority].keys():
                     artSpec = artifactList[ga][priority][version]
                     for artType in list(artSpec.artTypes.keys()):
-                        artTypeObj = artSpec.artTypes[artType]
                         if artType in exclTypes:
+                            artTypeObj = artSpec.artTypes[artType]
                             classifiers = artTypeObj.classifiers
                             (groupId, artifactId) = ga.split(':')
                             for classifier in list(classifiers):
                                 art = MavenArtifact(groupId, artifactId, artType, version, classifier)
                                 gatcv = art.getGATCV()
                                 if not maven_repo_util.somethingMatch(regExps, gatcv):
+                                    logging.debug("Dropping classifier \"%s\" of %s:%s:%s from priority %i because of "
+                                                  "excluded type.", classifier, ga, artType, version, priority)
                                     classifiers.remove(classifier)
+                                else:
+                                    logging.debug("Skipping drop of %s:%s:%s:%s from priority %i because it matches a "
+                                                  "whitelist pattern.", ga, artType, classifier, version, priority)
                             if not classifiers:
+                                logging.debug("Dropping %s:%s:%s from priority %i because of no classifier left.", ga,
+                                              artType, version, priority)
                                 del(artSpec.artTypes[artType])
                     noMain = True
                     for artType in artSpec.artTypes.keys():
@@ -115,10 +130,18 @@ class Filter:
                             noMain = False
                             break
                     if not artSpec.artTypes or noMain:
+                        if noMain:
+                            logging.debug("Dropping GAV %s:%s from priority %i because of no main artifact left.",
+                                          ga, version, priority)
+                        else:
+                            logging.debug("Dropping GAV %s:%s from priority %i because of no artifact type left.",
+                                          ga, version, priority)
                         del artifactList[ga][priority][version]
                 if not artifactList[ga][priority]:
+                    logging.debug("Dropping GA %s from priority %i because of no version left.", ga, priority)
                     del artifactList[ga][priority]
             if not artifactList[ga]:
+                logging.debug("Dropping GA %s because of no priority left.", ga)
                 del artifactList[ga]
         return artifactList
 
@@ -145,16 +168,21 @@ class Filter:
                         _artifactInRepos,
                         [self.config.excludedRepositories, artifact, priority, delArtifacts]
                     )
-                if not artifactList[ga][priority]:
-                    del artifactList[ga][priority]
-            if not artifactList[ga]:
-                del artifactList[ga]
 
         # Close the pool and wait for the workers to finnish
         pool.close()
         pool.join()
         for artifact, priority in delArtifacts:
-            del artifactList[artifact.getGA()][priority][artifact.version]
+            ga = artifact.getGA()
+            logging.debug("Dropping GAV %s:%s from priority %i because it was found in an excluded repository.",
+                          ga, artifact.version, priority)
+            del artifactList[ga][priority][artifact.version]
+        if not artifactList[ga][priority]:
+            logging.debug("Dropping GA %s from priority %i because of no version left.", ga, priority)
+            del artifactList[ga][priority]
+        if not artifactList[ga]:
+            logging.debug("Dropping GA %s because of no priority left.", ga)
+            del artifactList[ga]
 
         return artifactList
 
@@ -174,10 +202,14 @@ class Filter:
                         if pr <= priority:
                             continue
                         if version in artifactList[ga][pr]:
+                            logging.debug("Dropping GAV %s:%s from priority %i because its duplicate was found in "
+                                          "priority %s.", ga, version, pr, priority)
                             del artifactList[ga][pr][version]
                 if not artifactList[ga][priority]:
+                    logging.debug("Dropping GA %s from priority %i because of no version left.", ga, priority)
                     del artifactList[ga][priority]
             if not artifactList[ga]:
+                logging.debug("Dropping GA %s because of no priority left.", ga)
                 del artifactList[ga]
         return artifactList
 
@@ -200,9 +232,15 @@ class Filter:
 
             # Remove version, priorities and gats from artifactList as necessary
             for version in versions[1:]:
-                artifactList[ga][priority].pop(version, None)
+                logging.debug("Dropping GAV %s:%s from priority %i because only single version is allowed.", ga,
+                              version, priority)
+                del artifactList[ga][priority][version]
             for p in priorities[1:]:
-                artifactList[ga].pop(p, None)
+                logging.debug("Dropping GA %s from priority %i because of no version left.", ga, p)
+                del artifactList[ga][p]
+            if not artifactList[ga]:
+                logging.debug("Dropping GA %s because of no priority left.", ga)
+                del artifactList[ga]
 
         return artifactList
 
