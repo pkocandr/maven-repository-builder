@@ -335,12 +335,17 @@ def str2bool(v):
               False if its 'false', 'no', 'f', 'n' or '0',
               raises ValueError if its none of the above
     """
-    if v.lower() in ['true', 'yes', 't', 'y', '1']:
-        return True
-    elif v.lower() in ['false', 'no', 'f', 'n', '0']:
-        return False
+    if isinstance(v, bool):
+        return v
+    elif isinstance(v, basestring):
+        if v.lower() in ['true', 'yes', 't', 'y', '1']:
+            return True
+        elif v.lower() in ['false', 'no', 'f', 'n', '0']:
+            return False
+        else:
+            raise ValueError("Failed to convert '" + v + "' to boolean")
     else:
-        raise ValueError("Failed to convert '" + v + "' to boolean")
+        raise ValueError("Failed to convert '" + v + "' to boolean, not a string.")
 
 
 def gavExists(repoUrl, artifact):
