@@ -13,6 +13,8 @@ class MavenArtifact:
     """
     snapshotVersionSuffix = None
 
+    gav_cache = dict()
+
     def __init__(self, groupId, artifactId, artifactType, version, classifier=''):
         self.groupId = groupId
         self.artifactId = artifactId
@@ -28,6 +30,9 @@ class MavenArtifact:
 
         :returns: MavenArtifact instance
         """
+        if gav in MavenArtifact.gav_cache:
+            return MavenArtifact.gav_cache[gav]
+
         gavParts = gav.split(':')
         if len(gavParts) not in [3, 4, 5, 6]:
             logging.error("Invalid GAV string: %s", gav)
@@ -53,7 +58,11 @@ class MavenArtifact:
                 classifier = gavParts[3]
                 version = gavParts[4]
 
-        return MavenArtifact(groupId, artifactId, artifactType, version, classifier)
+        result = MavenArtifact(groupId, artifactId, artifactType, version, classifier)
+
+        MavenArtifact.gav_cache[gav] = result
+
+        return result
 
     @staticmethod
     def createFromPomPath(path):
