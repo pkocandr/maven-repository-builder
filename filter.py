@@ -58,6 +58,8 @@ class Filter:
                 for version in artifactList[ga][priority].keys():
                     gav = "%s:%s" % (ga, version)
                     if maven_repo_util.somethingMatch(gavRegExps, gav):
+                        logging.debug("Dropping GAV %s:%s from priority %i because it matches an excluded "
+                                      "GAV pattern.", ga, version, priority)
                         del artifactList[ga][priority][version]
                     else:
                         artSpec = artifactList[ga][priority][version]
