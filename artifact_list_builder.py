@@ -33,7 +33,7 @@ class ArtifactListBuilder:
             </mirror>
           </mirrors>
         </settings>"""
-         
+
     notMainExtClassifiers = set(["pom:", "jar:javadoc", "jar:sources", "jar:tests", "jar:test-sources",
                                  "tar.gz:project-sources", "zip:patches", "zip:scm-sources"])
 
@@ -385,9 +385,11 @@ class ArtifactListBuilder:
                                 rel_path = []
                                 for gav_rel in gav_path:
                                     declaring = MavenArtifact.createFromGAV(gav_rel["declaring"])
-                                    target = MavenArtifact.createFromGAV(gav_rel["target"])
+                                    target = MavenArtifact.createFromGAV(maven_repo_util.gatvc_to_gatcv(gav_rel["target"]))
                                     if gav_rel["rel"] == "DEPENDENCY":
                                         rel = ArtifactRelationship(declaring, target, gav_rel["rel"], gav_rel["scope"])
+                                    elif gav_rel["rel"] == "PLUGIN_DEP":
+                                        rel = ArtifactRelationship(declaring, target, gav_rel["rel"], gav_rel["plugin"])
                                     else:
                                         rel = ArtifactRelationship(declaring, target, gav_rel["rel"])
                                     rel_path.append(rel)
@@ -699,7 +701,6 @@ class ArtifactListBuilder:
                                             break
                                     if broken:
                                         break
-                                    
 
     def _getArtifactVersionREString(self, artifactId, version):
         if version.endswith("-SNAPSHOT"):
@@ -902,17 +903,17 @@ class ArtifactRelationship():
     scope is stored.
     """
 
-    def __init__(self, declaring, target, rel, scope=None):
+    def __init__(self, declaring, target, rel, extra=None):
         """
         :param declaring: the declaring artifact
         :param target: the target artifact
         :param rel: the relationship type, available values are "PARENT", "DEPENDENCY", "BOM"
-        :param scope: the scope of dependency relationship
+        :param extra: extra info for different relationship types, i.e. scope for dependencies, plugin for plugin deps
         """
         self.declaring = declaring
         self.target = target
         self.rel = rel
-        self.scope = scope
+        self.extra = extra
 
 
 class ArtifactType():
