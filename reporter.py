@@ -177,7 +177,7 @@ def generate_artifact_page(ma, roots, paths, output):
             "<p class=\"breadcrumbs\"><a href=\"groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>" + \
             "&nbsp;:&nbsp;<a href=\"artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>" + \
             "&nbsp;:&nbsp;{version}</p>" + \
-            "<h2>Paths</h2><ul>").format(gav=ma.getGAV().replace(":", " : "), groupid=ma.groupId, artifactid=ma.artifactId, version=ma.version)
+            "<h2>Paths</h2><ul id=\"paths\">").format(gav=ma.getGAV().replace(":", " : "), groupid=ma.groupId, artifactid=ma.artifactId, version=ma.version)
     examples = ""
     if ma.getGAV() in roots:
         li = "<li>"
@@ -203,12 +203,16 @@ def generate_artifact_page(ma, roots, paths, output):
                 if rel_type is None:
                     li += "unknown relation"
                 elif rel_type == "DEPENDENCY":
-                    if rel.scope == "embedded":
+                    if rel.extra == "embedded":
                         li += "embeds"
                     else:
-                        li += "depends on (scope %s)" % rel.scope
+                        li += "depends on (scope %s)" % rel.extra
                 elif rel_type == "PARENT":
                     li += "has parent"
+                elif rel_type == "PLUGIN":
+                    li += "uses plugin"
+                elif rel_type == "PLUGIN_DEP":
+                    li += "uses plugin %s with added dependency" % rel.extra
                 elif rel_type == "BOM":
                     li += "imports BOM"
                 else:
@@ -342,7 +346,7 @@ def generate_summary(roots, boms, groupids, multiversion_gas, output, report_nam
 
 
 def generate_css(output):
-    css = ".error, .error a { color: red }\n.example, .example a { color: grey }\n.relation { color: grey; font-size: 0.8em }"
+    css = ".error, .error a { color: red }\n.example, .example a { color: grey }\n.relation { color: grey; font-size: 0.8em }\n#paths li { padding-bottom: 0.5em }"
     with open(os.path.join(output, "pages", "style.css"), "w") as cssfile:
         cssfile.write(css)
 

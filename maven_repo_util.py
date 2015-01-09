@@ -560,3 +560,17 @@ def parseGATCVS(string):
     match = _regexGATCVS.search(string)
     if match:
         return match.group(1)
+
+
+def gatvc_to_gatcv(gatvc):
+    """
+    Checks if the input contains 5 parts and if so, it swaps the last two.
+
+    :param gatvc: combination of groupId:artifactId:type:version:classifier where classifier is not mandatory
+    :return: combination of groupId:artifactId:type:classifier:version if classifier available, input if not
+    """
+    if gatvc and gatvc.count(":") == 4:
+        parts = gatvc.split(":")
+        return ":".join(parts[0:3] + [parts[4], parts[3]])
+    else:
+        return gatvc
