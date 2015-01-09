@@ -142,7 +142,7 @@ class ArtifactListBuilder:
                                       artifact.version)
                         del artSpec.artTypes[artType]
                 if not artSpec.containsMain():
-                    logging.debug("Dropping GAV %s:%s because of no main artifact left.", ga, artifact.version)
+                    logging.debug("Dropping GAV %s because of no main artifact left.", gav)
                     del artifacts[artifact]
         return artifacts
 
