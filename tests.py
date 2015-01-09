@@ -21,6 +21,8 @@ from filter import Filter
 
 class Tests(unittest.TestCase):
 
+    aproxUrl = 'http://dev208.mw.lab.eng.bos.redhat.com:8080/'
+
     artifactList = {
       "com.google.guava:guava:pom": {
         "1": {
@@ -349,7 +351,6 @@ class Tests(unittest.TestCase):
     def test_listDependencyGraph_allclassifiers(self):
         config = configuration.Configuration()
         config.allClassifiers = True
-        aproxUrl = 'http://aprox-dev.app.eng.bos.redhat.com:8080/aprox/'
         sourceKey = "repository:central"
         topGavs = [
             'org.apache.ant:ant:1.8.0'
@@ -367,17 +368,16 @@ class Tests(unittest.TestCase):
         expectedArtifacts = {}
         for dep in dependencies:
             artifact = MavenArtifact.createFromGAV(dep)
-            expectedArtifacts[artifact] = ArtifactSpec(aproxUrl, dependencies[dep])
+            expectedArtifacts[artifact] = ArtifactSpec(self.aproxUrl, dependencies[dep])
 
         builder = artifact_list_builder.ArtifactListBuilder(config)
-        actualArtifacts = builder._listDependencyGraph(aproxUrl, None, sourceKey, topGavs)
+        actualArtifacts = builder._listDependencyGraph(self.aproxUrl, None, sourceKey, topGavs)
 
         self.assertEqualArtifactList(expectedArtifacts, actualArtifacts)
 
     def test_listDependencyGraph(self):
         config = configuration.Configuration()
         config.allClassifiers = False
-        aproxUrl = 'http://aprox-dev.app.eng.bos.redhat.com:8080/aprox/'
         sourceKey = "repository:central"
         topGavs = [
             'org.apache.ant:ant:1.8.0'
@@ -395,16 +395,15 @@ class Tests(unittest.TestCase):
         expectedArtifacts = {}
         for dep in dependencies:
             artifact = MavenArtifact.createFromGAV(dep)
-            expectedArtifacts[artifact] = ArtifactSpec(aproxUrl, dependencies[dep])
+            expectedArtifacts[artifact] = ArtifactSpec(self.aproxUrl, dependencies[dep])
 
         builder = artifact_list_builder.ArtifactListBuilder(config)
-        actualArtifacts = builder._listDependencyGraph(aproxUrl, None, sourceKey, topGavs)
+        actualArtifacts = builder._listDependencyGraph(self.aproxUrl, None, sourceKey, topGavs)
 
         self.assertEqualArtifactList(expectedArtifacts, actualArtifacts)
 
     def test_aproxCreateDeleteWorkspace(self):
-        aproxUrl = 'http://aprox-dev.app.eng.bos.redhat.com:8080/aprox/'
-        aproxApi = AproxApi10(aproxUrl)
+        aproxApi = AproxApi10(self.aproxUrl)
 
         ws = aproxApi.createWorkspace()
         wsid = ws["id"]
