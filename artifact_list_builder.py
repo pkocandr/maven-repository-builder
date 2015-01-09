@@ -37,6 +37,8 @@ class ArtifactListBuilder:
     notMainExtClassifiers = set(["pom:", "jar:javadoc", "jar:sources", "jar:tests", "jar:test-sources",
                                  "tar.gz:project-sources", "zip:patches", "zip:scm-sources"])
 
+    IGNORED_REPOSITORY_FILES = set(["maven-metadata.xml", "maven-metadata.xml.md5", "maven-metadata.xml.sha1"])
+
     def __init__(self, configuration):
         self.configuration = configuration
 
@@ -489,6 +491,9 @@ class ArtifactListBuilder:
                     version = gavf.group(3)
                     filename = gavf.group(4)
 
+                    if filename in self.IGNORED_REPOSITORY_FILES:
+                        continue
+
                     (extsAndClass, suffix) = self._getExtensionsAndClassifiers(artifactId, version, [filename])
 
                     gav = (groupId, artifactId, version)
@@ -530,10 +535,12 @@ class ArtifactListBuilder:
                 artifactId = gav.group(2)
                 version = gav.group(3)
 
-                (extsAndClass, suffix) = self._getExtensionsAndClassifiers(artifactId, version, filenames)
+                filteredFilenames = list(set(filenames) - self.IGNORED_REPOSITORY_FILES)
+                if filteredFilenames:
+                    (extsAndClass, suffix) = self._getExtensionsAndClassifiers(artifactId, version, filteredFilenames)
 
-                url = "file://" + directoryPath
-                self._addArtifact(artifacts, groupId, artifactId, version, extsAndClass, suffix, url)
+                    url = "file://" + directoryPath
+                    self._addArtifact(artifacts, groupId, artifactId, version, extsAndClass, suffix, url)
 
         return artifacts
 
