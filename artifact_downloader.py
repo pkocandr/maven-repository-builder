@@ -6,9 +6,9 @@ a list of artifacts and a remote repository URL.
 import logging
 import os
 import re
-import threading
 import urlparse
-import Queue
+from multiprocessing import Queue
+from multiprocessing import Lock
 from multiprocessing.pool import ThreadPool
 
 import maven_repo_util
@@ -74,9 +74,9 @@ def fetchArtifactList(remoteRepoUrl, localRepoDir, artifactList, checksumMode):
     if protocol == 'http' or protocol == 'https':
         # Create thread pool
         pool = ThreadPool(maven_repo_util.MAX_THREADS)
-        errors = Queue.Queue()
-        mkdirLock = threading.Lock()
-        filesetLock = threading.Lock()
+        errors = Queue()
+        mkdirLock = Lock()
+        filesetLock = Lock()
         fileset = set([])
 
         for artifact in artifactList:
