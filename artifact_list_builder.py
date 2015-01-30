@@ -2,13 +2,18 @@ import copy
 import os
 import re
 import logging
+import traceback
 from aprox_apis import AproxApi
+import multiprocessing.pool
 from multiprocessing.pool import ThreadPool
+from multiprocessing import Lock
+from multiprocessing import Queue
 from subprocess import Popen
 from subprocess import PIPE
 
 import maven_repo_util
 from maven_artifact import MavenArtifact
+import time
 
 
 class ArtifactListBuilder:
@@ -40,8 +45,13 @@ class ArtifactListBuilder:
 
     IGNORED_REPOSITORY_FILES = set(["maven-metadata.xml", "maven-metadata.xml.md5", "maven-metadata.xml.sha1"])
 
+    MAX_THREADS_DICT = {"mead-tag": 2, "dependency-list": 1, "dependency-graph": 6, "repository": 2}
+
     def __init__(self, configuration):
         self.configuration = configuration
+        self.al_lock = Lock()
+        self.max_threads = 6
+        self.artifactList = {}
 
     def buildList(self):
         """
@@ -49,11 +59,72 @@ class ArtifactListBuilder:
 
         :returns: Dictionary described above.
         """
-        artifactList = {}
         priority = 0
+        pool_dict = {}
+
         for source in self.configuration.artifactSources:
             priority += 1
+            pool = pool_dict.setdefault(source['type'], ThreadPool(self.MAX_THREADS_DICT[source['type']]))
+            errors = Queue()
+            pool.apply_async(self._read_artifact_source, args=[source, priority, errors],
+                             callback=self._add_artifacts)
 
+        for pool in pool_dict.values():
+            pool.close()
+
+        at_least_1_runs = True
+        while at_least_1_runs:
+            time.sleep(1)
+
+            if not errors.empty():
+                for pool in pool_dict.values():
+                    logging.debug("Terminating pool %s", str(pool))
+                    pool.terminate()
+                break
+
+            at_least_1_runs = False
+            for pool in pool_dict.values():
+                if pool._taskqueue.unfinished_tasks:
+                    at_least_1_runs = True
+                    break
+
+        for pool in pool_dict.values():
+            if pool._state != multiprocessing.pool.TERMINATE:
+                pool.join()
+
+        if not errors.empty():
+            raise RuntimeError("%i error(s) occured during reading of artifact list." % errors.qsize())
+
+        return self.artifactList
+
+    def _add_artifacts(self, result):
+        if result:
+            self.al_lock.acquire()
+            try:
+                for priority in result:
+                    artifacts = result[priority]
+                    logging.debug("Placing %d artifacts in the result list", len(artifacts))
+                    for artifact in artifacts:
+                        ga = artifact.getGA()
+                        artSpec = artifacts[artifact]
+                        self.artifactList.setdefault(ga, {}).setdefault(priority, {})
+                        if artifact.version in self.artifactList[ga][priority]:
+                            self.artifactList[ga][priority][artifact.version].merge(artSpec)
+                        else:
+                            self.artifactList[ga][priority][artifact.version] = artSpec
+                logging.debug("The result contains %d GAs so far", len(self.artifactList))
+            finally:
+                self.al_lock.release()
+
+    def _read_artifact_source(self, source, priority, errors):
+        """
+        Reads artifact list from the given artifact source.
+
+        :param source: artifact source configuration
+        :param priority: priority of the given source
+        :returns: artifact list read from the source
+        """
+        try:
             if source['type'] == 'mead-tag':
                 logging.info("Building artifact list from tag %s", source['tag-name'])
                 artifacts = self._listMeadTagArtifacts(source['koji-url'],
@@ -86,23 +157,17 @@ class ArtifactListBuilder:
                                                  source['included-gatcvs'])
             else:
                 logging.warning("Unsupported source type: %s", source['type'])
-                continue
+                return
 
             if source["excludedGAVs"]:
                 self._filterExcludedGAVs(artifacts, source["excludedGAVs"], priority)
 
-            logging.debug("Placing %d artifacts in the result list", len(artifacts))
-            for artifact in artifacts:
-                ga = artifact.getGA()
-                artSpec = artifacts[artifact]
-                artifactList.setdefault(ga, {}).setdefault(priority, {})
-                if artifact.version in artifactList[ga][priority]:
-                    artifactList[ga][priority][artifact.version].merge(artSpec)
-                else:
-                    artifactList[ga][priority][artifact.version] = artSpec
-            logging.debug("The result contains %d GAs so far", len(artifactList))
-
-        return artifactList
+            return {priority: artifacts}
+        except BaseException as ex:
+            tb = traceback.format_exc()
+            logging.error("Error while reading artifacts in priority %i: %s. Traceback\n%s", priority, str(ex), tb)
+            errors.put(ex)
+            raise ex
 
     def _filterExcludedGAVs(self, artifacts, excludedGAVs, priority):
         """
@@ -207,7 +272,7 @@ class ArtifactListBuilder:
         :param gavs: List of top level GAVs
         :param recursive: runs dependency:list recursively using the previously discovered dependencies if True
         :param include_scope: defines scope which will be used when running mvn as includeScope parameter, can be None
-                              to use Maven's default  
+                              to use Maven's default
         :returns: Dictionary where index is MavenArtifact object and value is
                   ArtifactSpec with its repo root URL
         """
@@ -396,11 +461,11 @@ class ArtifactListBuilder:
                                     else:
                                         rel = ArtifactRelationship(declaring, target, gav_rel["rel"])
                                     rel_path.append(rel)
-    
+
                                 artifacts[ma].add_path(rel_path)
             for ma in artifacts.keys():
                 if not artifacts[ma].paths and ma.getGAV() not in gavs:
-                    # create artificial unknown paths from all roots to current artifact 
+                    # create artificial unknown paths from all roots to current artifact
                     for root in gavs:
                         if root != ma.getGAV():
                             rel_path = [ArtifactRelationship(MavenArtifact.createFromGAV(root), None, None),
