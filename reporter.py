@@ -160,7 +160,7 @@ def generate_report(output, artifactSources, artifactList, report_name):
             versions = artifactids[artifactid]
             for version in versions.keys():
                 art_spec = versions[version]
-    
+
                 ma = MavenArtifact.createFromGAV("%s:%s:%s" % (groupid, artifactid, version))
                 generate_artifact_page(ma, roots, art_spec.paths, output)
             generate_artifactid_page(groupid, artifactid, versions, output)
@@ -195,7 +195,7 @@ def generate_artifact_page(ma, roots, paths, output):
         for rel in path:
             dec = rel.declaring
             if dec:
-                rel_type = rel.rel
+                rel_type = rel.rel_type
                 li += "<a href=\"artifact_version_{gav_filename}.html\" title=\"{gav}\">{daid}</a>".format(
                       gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId,
                       gav_filename=dec.getGAV().replace(":", "$"))
