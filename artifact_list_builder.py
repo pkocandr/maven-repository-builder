@@ -461,12 +461,13 @@ class ArtifactListBuilder:
                                 for gav_rel in gav_path:
                                     declaring = MavenArtifact.createFromGAV(gav_rel["declaring"])
                                     target = MavenArtifact.createFromGAV(maven_repo_util.gatvc_to_gatcv(gav_rel["target"]))
-                                    if gav_rel["rel"] == "DEPENDENCY":
-                                        rel = ArtifactRelationship(declaring, target, gav_rel["rel"], gav_rel["scope"])
-                                    elif gav_rel["rel"] == "PLUGIN_DEP":
-                                        rel = ArtifactRelationship(declaring, target, gav_rel["rel"], gav_rel["plugin"])
+                                    rel_type = gav_rel["type"] if "type" in gav_rel else gav_rel["rel"]
+                                    if rel_type == "DEPENDENCY":
+                                        rel = ArtifactRelationship(declaring, target, rel_type, gav_rel["scope"])
+                                    elif rel_type == "PLUGIN_DEP":
+                                        rel = ArtifactRelationship(declaring, target, rel_type, gav_rel["plugin"])
                                     else:
-                                        rel = ArtifactRelationship(declaring, target, gav_rel["rel"])
+                                        rel = ArtifactRelationship(declaring, target, rel_type)
                                     rel_path.append(rel)
 
                                 artifacts[ma].add_path(rel_path)
@@ -978,7 +979,7 @@ class ArtifactRelationship():
     scope is stored.
     """
 
-    def __init__(self, declaring, target, rel, extra=None):
+    def __init__(self, declaring, target, rel_type, extra=None):
         """
         :param declaring: the declaring artifact
         :param target: the target artifact
@@ -987,7 +988,7 @@ class ArtifactRelationship():
         """
         self.declaring = declaring
         self.target = target
-        self.rel = rel
+        self.rel_type = rel_type
         self.extra = extra
 
 
