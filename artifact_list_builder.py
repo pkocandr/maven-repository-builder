@@ -49,9 +49,9 @@ class ArtifactListBuilder:
 
     def __init__(self, configuration):
         self.configuration = configuration
-        self.al_lock = Lock()
+        self.results_lock = Lock()
+        self.results = {}
         self.max_threads = 6
-        self.artifactList = {}
 
     def buildList(self):
         """
@@ -67,12 +67,13 @@ class ArtifactListBuilder:
             pool = pool_dict.setdefault(source['type'], ThreadPool(self.MAX_THREADS_DICT[source['type']]))
             errors = Queue()
             pool.apply_async(self._read_artifact_source, args=[source, priority, errors],
-                             callback=self._add_artifacts)
+                             callback=self._add_result)
 
         for pool in pool_dict.values():
             pool.close()
 
         at_least_1_runs = True
+        all_keys = range(1, len(self.configuration.artifactSources) + 1)
         while at_least_1_runs:
             time.sleep(1)
 
@@ -83,10 +84,11 @@ class ArtifactListBuilder:
                 break
 
             at_least_1_runs = False
-            for pool in pool_dict.values():
-                if pool._taskqueue.unfinished_tasks:
-                    at_least_1_runs = True
-                    break
+            finished = sorted(list(self.results.keys()))
+            if all_keys != finished:
+                logging.debug("Still waiting for priorities %s to finish", str(list(set(all_keys) - set(finished))))
+                at_least_1_runs = True
+                break
 
         for pool in pool_dict.values():
             if pool._state != multiprocessing.pool.TERMINATE:
@@ -95,26 +97,31 @@ class ArtifactListBuilder:
         if not errors.empty():
             raise RuntimeError("%i error(s) occured during reading of artifact list." % errors.qsize())
 
-        return self.artifactList
+        return self._get_artifact_list()
 
-    def _add_artifacts(self, result):
+    def _add_result(self, result):
         if result:
-            self.al_lock.acquire()
             try:
-                for priority in result:
-                    artifacts = result[priority]
-                    logging.debug("Placing %d artifacts in the result list", len(artifacts))
-                    for artifact in artifacts:
-                        ga = artifact.getGA()
-                        artSpec = artifacts[artifact]
-                        self.artifactList.setdefault(ga, {}).setdefault(priority, {})
-                        if artifact.version in self.artifactList[ga][priority]:
-                            self.artifactList[ga][priority][artifact.version].merge(artSpec)
-                        else:
-                            self.artifactList[ga][priority][artifact.version] = artSpec
-                logging.debug("The result contains %d GAs so far", len(self.artifactList))
+                self.results_lock.acquire()
+                self.results.update(result)
             finally:
-                self.al_lock.release()
+                self.results_lock.release()
+
+    def _get_artifact_list(self):
+        artifactList = {}
+        for priority, artifacts in self.results.iteritems():
+            logging.debug("Placing %d artifacts in the result list", len(artifacts))
+            for artifact in artifacts:
+                ga = artifact.getGA()
+                artSpec = artifacts[artifact]
+                artifactList.setdefault(ga, {}).setdefault(priority, {})
+                if artifact.version in artifactList[ga][priority]:
+                    artifactList[ga][priority][artifact.version].merge(artSpec)
+                else:
+                    artifactList[ga][priority][artifact.version] = artSpec
+            logging.debug("The result contains %d GAs so far", len(artifactList))
+
+        return artifactList
 
     def _read_artifact_source(self, source, priority, errors):
         """
