@@ -210,7 +210,6 @@ class Configuration:
                         excluded_subgraphs.extend(source['excluded-subgraphs'])
                 source['excluded-subgraphs'] = excluded_subgraphs
 
-
             elif source['type'] == 'repository':
                 source['repo-url'] = self._getRepoUrl(source)
                 source['included-gav-patterns'] = self._loadFlatFileBySourceParameter(source,
