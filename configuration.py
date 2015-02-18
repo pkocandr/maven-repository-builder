@@ -101,6 +101,8 @@ class Configuration:
                     source['wsid'] = None
                 if 'excluded-sources' not in source:
                     source['excluded-sources'] = []
+                if 'excluded-subgraphs' not in source:
+                    source['excluded-subgraphs'] = []
                 if 'preset' not in source:
                     source['preset'] = None
                 if 'patcher-ids' not in source:
@@ -194,18 +196,28 @@ class Configuration:
                     source['skip-missing'] = maven_repo_util.str2bool(source['skip-missing'])
                 source['repo-url'] = self._getRepoUrl(source)
                 source['top-level-gavs'] = self._loadFlatFileBySourceParameter(source, 'top-level-gavs-ref',
-                        filePath)
+                                                                               filePath)
 
             elif source['type'] == 'dependency-graph':
                 source['top-level-gavs'] = self._loadFlatFileBySourceParameter(source, 'top-level-gavs-ref',
-                        filePath)
+                                                                               filePath)
+                excluded_subgraphs = self._loadFlatFileBySourceParameter(source, 'excluded-subgraphs-ref',
+                                                                         filePath)
+                if 'excluded-subgraphs' in source:
+                    if isinstance(source['excluded-subgraphs'], basestring):
+                        excluded_subgraphs.append(source['excluded-subgraphs'])
+                    else:
+                        excluded_subgraphs.extend(source['excluded-subgraphs'])
+                source['excluded-subgraphs'] = excluded_subgraphs
+
 
             elif source['type'] == 'repository':
                 source['repo-url'] = self._getRepoUrl(source)
                 source['included-gav-patterns'] = self._loadFlatFileBySourceParameter(source,
-                        'included-gav-patterns-ref', filePath)
+                                                                                      'included-gav-patterns-ref',
+                                                                                      filePath)
                 source['included-gatcvs'] = self._loadArtifactFileBySourceParameter(source, 'included-gatcvs-ref',
-                        filePath)
+                                                                                    filePath)
 
             source["excludedGAVs"] = []
             if 'excluded-gav-patterns-ref' in source:
