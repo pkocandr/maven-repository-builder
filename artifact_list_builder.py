@@ -373,11 +373,11 @@ class ArtifactListBuilder:
                 if not ga in gas:
                     gas.append(ga)
             if self.configuration.useCache:
-                path_dict = aprox.paths(_wsid, sourceKey, gavs, gas, excludedSources, preset, patcherIds,
-                                        injectedBOMs, False)
+                path_dict = aprox.paths(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs, preset,
+                                        patcherIds, injectedBOMs, False)
             else:
-                path_dict = aprox.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, preset, patcherIds,
-                                                injectedBOMs, False)
+                path_dict = aprox.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
+                                                preset, patcherIds, injectedBOMs, False)
             if path_dict:
                 for ma in artifacts.keys():
                     for key in path_dict.keys():
