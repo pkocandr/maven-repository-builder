@@ -73,6 +73,7 @@ class ArtifactListBuilder:
                                                       source['source-key'],
                                                       self._parseDepList(source['top-level-gavs']),
                                                       source['excluded-sources'],
+                                                      source['excluded-subgraphs'],
                                                       source['preset'],
                                                       source['patcher-ids'],
                                                       source['injected-boms'],
@@ -313,8 +314,8 @@ class ArtifactListBuilder:
 
         return artifacts
 
-    def _listDependencyGraph(self, aproxUrl, wsid, sourceKey, gavs, excludedSources=[], preset="sob-build",
-                             patcherIds=[], injectedBOMs=[], analyze=False):
+    def _listDependencyGraph(self, aproxUrl, wsid, sourceKey, gavs, excludedSources=[], excludedSubgraphs=[],
+                             preset="sob-build", patcherIds=[], injectedBOMs=[], analyze=False):
         """
         Loads maven artifacts from dependency graph.
 
@@ -324,6 +325,7 @@ class ArtifactListBuilder:
                           its name of the form <{repository|deploy|group}:<name>>
         :param gavs: List of top level GAVs
         :param excludedSources: list of excluded sources' keys
+        :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
         :param patcherIds: list of patcher ID strings for AProx
         :param injectedBOMs: list of injected BOMs used with dependency management injection
@@ -343,11 +345,11 @@ class ArtifactListBuilder:
 
         # Resolve graph MANIFEST for GAVs
         if self.configuration.useCache:
-            urlmap = aprox.urlmap(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources, preset,
-                                  patcherIds, injectedBOMs)
+            urlmap = aprox.urlmap(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
+                                  excludedSubgraphs, preset, patcherIds, injectedBOMs)
         else:
             urlmap = aprox.urlmap_nocache(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
-                                          preset, patcherIds, injectedBOMs)
+                                          excludedSubgraphs, preset, patcherIds, injectedBOMs)
 
         # parse returned map
         artifacts = {}
