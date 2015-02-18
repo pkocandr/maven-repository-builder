@@ -608,7 +608,8 @@ class AproxApi(UrlRequester):
                              Maven extension
         :param resolve: flag to tell AProx to run resolve for given roots
         """
-        cache_filename = self.get_paths_cache_filename(sourceKey, roots, targets, excludedSources, preset, patcherIds, injectedBOMs)
+        cache_filename = self.get_paths_cache_filename(sourceKey, roots, targets, excludedSources, excludedSubgraphs,
+                                                       preset, patcherIds, injectedBOMs)
         cache_dirname = os.path.dirname(cache_filename)
         if not os.path.exists(cache_dirname):
             os.makedirs(cache_dirname)
