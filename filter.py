@@ -206,6 +206,8 @@ class Filter:
                         if version in artifactList[ga][pr]:
                             logging.debug("Dropping GAV %s:%s from priority %i because its duplicate was found in "
                                           "priority %s.", ga, version, pr, priority)
+                            if len(artifactList[ga][pr][version].paths):
+                                artifactList[ga][priority][version].paths.extend(artifactList[ga][pr][version].paths)
                             del artifactList[ga][pr][version]
                 if not artifactList[ga][priority]:
                     logging.debug("Dropping GA %s from priority %i because of no version left.", ga, priority)
