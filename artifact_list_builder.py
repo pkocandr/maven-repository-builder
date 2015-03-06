@@ -40,7 +40,8 @@ class ArtifactListBuilder:
         </settings>"""
 
     notMainExtClassifiers = set(["pom:", "jar:javadoc", "jar:sources", "jar:tests", "jar:test-sources",
-                                 "tar.gz:project-sources", "zip:patches", "zip:scm-sources"])
+                                 "tar.gz:project-sources", "xml:site", "zip:patches",
+                                 "zip:scm-sources"])
 
     IGNORED_REPOSITORY_FILES = set(["maven-metadata.xml", "maven-metadata.xml.md5", "maven-metadata.xml.sha1"])
 
