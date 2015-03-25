@@ -26,7 +26,7 @@
         "group:central+eap6"
       ],
 	  "excluded-subgraphs": ["org.apache.ant:ant:1.8.0"],
-	  "excluded-subgraphs-ref": ["excluded-gavs.list"]
+	  "excluded-subgraphs-ref": "excluded-gavs.list",
       "wsid": "1",
       "preset": "managed-sob-build",
       "top-level-gavs-ref": "top-level-gavs.list"
