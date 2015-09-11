@@ -178,6 +178,7 @@ For an example config with full config structure see [Sample Config](https://git
             *   **wsid** - AProx workspace ID. The field is not required. If ommited, a new workspace will be created
                 and deleted after all work finished.
             *   **preset** - AProx preset. The field is not required.
+            *   **preset-params** - Dictionary of AProx preset params. The field is not required.
             *   **injected-boms** - list of injected BOMs' GAVs when using dependency management injection Maven extension
             *   **excluded-sources** - list of AProx source keys to be excluded directly in the result of depgrapher.
                 The field is not required.
