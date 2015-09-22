@@ -296,9 +296,11 @@ class AproxApi(UrlRequester):
             request["injectedBOMs"] = injectedBOMs
         data = json.dumps(request)
 
+        headers = {"Content-Type": "application/json"}
+
         logging.debug("Requesting urlmap with config '%s'", data)
 
-        response = self._postUrl(url, data=data)
+        response = self._postUrl(url, data=data, headers=headers)
 
         if response.status == 200:
             responseContent = response.read()
@@ -472,9 +474,11 @@ class AproxApi(UrlRequester):
             request["injectedBOMs"] = injectedBOMs
         data = json.dumps(request)
 
+        headers = {"Content-Type": "application/json"}
+
         logging.debug("Requesting paths with config '%s'", data)
 
-        response = self._postUrl(url, data=data)
+        response = self._postUrl(url, data=data, headers=headers)
 
         if response.status == 200:
             responseContent = response.read()
