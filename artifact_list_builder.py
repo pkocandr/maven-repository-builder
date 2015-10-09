@@ -154,6 +154,7 @@ class ArtifactListBuilder:
                                                       source['excluded-sources'],
                                                       source['excluded-subgraphs'],
                                                       source['preset'],
+                                                      source['mutator'],
                                                       source['patcher-ids'],
                                                       source['injected-boms'],
                                                       self.configuration.analyze)
@@ -388,7 +389,7 @@ class ArtifactListBuilder:
         return artifacts
 
     def _listDependencyGraph(self, aproxUrl, wsid, sourceKey, gavs, excludedSources=[], excludedSubgraphs=[],
-                             preset="sob-build", patcherIds=[], injectedBOMs=[], analyze=False):
+                             preset="requires", mutator=None, patcherIds=[], injectedBOMs=[], analyze=False):
         """
         Loads maven artifacts from dependency graph.
 
@@ -400,6 +401,7 @@ class ArtifactListBuilder:
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
+        :param mutator: mutator used for dependency graph mutation
         :param patcherIds: list of patcher ID strings for AProx
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
@@ -419,10 +421,10 @@ class ArtifactListBuilder:
         # Resolve graph MANIFEST for GAVs
         if self.configuration.useCache:
             urlmap = aprox.urlmap(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
-                                  excludedSubgraphs, preset, patcherIds, injectedBOMs)
+                                  excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
         else:
             urlmap = aprox.urlmap_nocache(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
-                                          excludedSubgraphs, preset, patcherIds, injectedBOMs)
+                                          excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
 
         # parse returned map
         artifacts = {}
@@ -447,10 +449,10 @@ class ArtifactListBuilder:
                     gas.append(ga)
             if self.configuration.useCache:
                 path_dict = aprox.paths(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs, preset,
-                                        patcherIds, injectedBOMs, False)
+                                        mutator, patcherIds, injectedBOMs, False)
             else:
                 path_dict = aprox.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
-                                                preset, patcherIds, injectedBOMs, False)
+                                                preset, mutator, patcherIds, injectedBOMs, False)
             if path_dict:
                 for ma in artifacts.keys():
                     for key in path_dict.keys():

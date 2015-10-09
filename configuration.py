@@ -105,6 +105,8 @@ class Configuration:
                     source['excluded-subgraphs'] = []
                 if 'preset' not in source:
                     source['preset'] = None
+                if 'mutator' not in source:
+                    source['mutator'] = None
                 if 'patcher-ids' not in source:
                     source['patcher-ids'] = []
                 if 'injected-boms' not in source:
