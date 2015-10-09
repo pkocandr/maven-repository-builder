@@ -131,13 +131,13 @@ class AproxApi(UrlRequester):
                             strWsid, status)
             return False
 
-    def urlmap(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset, presetParams,
+    def urlmap(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset, mutator,
                patcherIds, injectedBOMs, resolve=True):
         """
         See urlmap_nocache() for method docs. This is caching version of the method.
         """
         cached = self.get_cached_urlmap(sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
-                                        presetParams, patcherIds, injectedBOMs, resolve)
+                                        mutator, patcherIds, injectedBOMs, resolve)
         if cached:
             logging.info("Using cached version of AProx urlmap for roots %s", "-".join(gavs))
             return json.loads(cached)
@@ -151,10 +151,10 @@ class AproxApi(UrlRequester):
                 deleteWS = True
 
             response = self.urlmap_response(wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs,
-                                            preset, presetParams, patcherIds, injectedBOMs, resolve)
+                                            preset, mutator, patcherIds, injectedBOMs, resolve)
             if response != "{}":
                 self.store_urlmap_cache(response, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs,
-                                        preset, presetParams, patcherIds, injectedBOMs, resolve)
+                                        preset, mutator, patcherIds, injectedBOMs, resolve)
 
             # cleanup
             if deleteWS:
@@ -163,7 +163,7 @@ class AproxApi(UrlRequester):
             return json.loads(response)
 
     def urlmap_nocache(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
-                       presetParams, patcherIds, injectedBOMs, resolve=True):
+                       mutator, patcherIds, injectedBOMs, resolve=True):
         """
         Requests creation of the urlmap. It creates the configfile, posts it to AProx server
         and process the result, which has following structure:
@@ -218,7 +218,7 @@ class AproxApi(UrlRequester):
             deleteWS = True
 
         response = self.urlmap_response(wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs,
-                                        preset, presetParams, patcherIds, injectedBOMs, resolve)
+                                        preset, mutator, patcherIds, injectedBOMs, resolve)
 
         # cleanup
         if deleteWS:
@@ -227,7 +227,7 @@ class AproxApi(UrlRequester):
         return json.loads(response)
 
     def urlmap_response(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
-                        presetParams, patcherIds, injectedBOMs, resolve=True):
+                        mutator, patcherIds, injectedBOMs, resolve=True):
         """
         Requests creation of the urlmap. It creates the configfile, posts it to AProx server
         and process the result, which has following structure:
@@ -287,9 +287,10 @@ class AproxApi(UrlRequester):
         if len(excludedSubgraphs):
             request["excludedSubgraphs"] = excludedSubgraphs
         request["resolve"] = resolve
-        request["graphComposition"] = {"graphs": [{"roots": gavs, "preset": preset}]}
-        if presetParams:
-            request["graphComposition"]["graphs"][0]["presetParams"] = presetParams
+        if mutator:
+            request["graphComposition"] = {"graphs": [{"roots": gavs, "preset": preset, "mutator": mutator}]}
+        else:
+            request["graphComposition"] = {"graphs": [{"roots": gavs, "preset": preset}]}
         if len(patcherIds):
             request["patcherIds"] = patcherIds
         if injectedBOMs and len(injectedBOMs):
@@ -311,13 +312,13 @@ class AproxApi(UrlRequester):
                             response.status, response.read())
             return "{}"
 
-    def paths(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, presetParams,
+    def paths(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, mutator,
               patcherIds, injectedBOMs, resolve=True):
         """
         See paths_response() for method docs. This is wrapping method to the one with caching.
         """
         cached = self.get_cached_paths(sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
-                                       presetParams, patcherIds, injectedBOMs, resolve)
+                                       mutator, patcherIds, injectedBOMs, resolve)
         if cached:
             logging.info("Using cached version of AProx paths for roots %s and targets %s", "-".join(roots),
                          "-".join(targets))
@@ -332,10 +333,10 @@ class AproxApi(UrlRequester):
                 deleteWS = True
 
             response = self.paths_response(wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
-                                           presetParams, patcherIds, injectedBOMs, resolve)
+                                           mutator, patcherIds, injectedBOMs, resolve)
 
             self.store_paths_cache(response, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
-                                   presetParams, patcherIds, injectedBOMs, resolve)
+                                   mutator, patcherIds, injectedBOMs, resolve)
 
             # cleanup
             if deleteWS:
@@ -343,7 +344,7 @@ class AproxApi(UrlRequester):
 
         return json.loads(response)
 
-    def paths_nocache(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, presetParams,
+    def paths_nocache(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, mutator,
                       patcherIds, injectedBOMs, resolve=True):
         """
         See paths_response() for method docs. This is wrapping method to the one without caching.
@@ -357,7 +358,7 @@ class AproxApi(UrlRequester):
             deleteWS = True
 
         response = self.paths_response(wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
-                                       presetParams, patcherIds, injectedBOMs, resolve)
+                                       mutator, patcherIds, injectedBOMs, resolve)
 
         # cleanup
         if deleteWS:
@@ -365,7 +366,7 @@ class AproxApi(UrlRequester):
 
         return json.loads(response)
 
-    def paths_response(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, presetParams,
+    def paths_response(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, mutator,
                        patcherIds, injectedBOMs, resolve=True):
         """
         Requests creation of the paths from roots to targets. It creates the configfile, posts it to AProx server
@@ -464,9 +465,10 @@ class AproxApi(UrlRequester):
         if len(excludedSubgraphs):
             request["excludedSubgraphs"] = excludedSubgraphs
         request["resolve"] = resolve
-        request["graphComposition"] = {"graphs": [{"roots": roots, "preset": preset}]}
-        if presetParams:
-            request["graphComposition"]["graphs"][0]["presetParams"] = presetParams
+        if mutator:
+            request["graphComposition"] = {"graphs": [{"roots": roots, "preset": preset, "mutator": mutator}]}
+        else:
+            request["graphComposition"] = {"graphs": [{"roots": roots, "preset": preset}]}
         request["targets"] = targets
         if len(patcherIds):
             request["patcherIds"] = patcherIds
@@ -489,7 +491,7 @@ class AproxApi(UrlRequester):
                             response.status, response.read())
             return "{}"
 
-    def get_cached_urlmap(self, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset, presetParams,
+    def get_cached_urlmap(self, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset, mutator,
                           patcherIds, injectedBOMs, resolve):
         """
         Gets cache urlmap response if exists for given parameters.
@@ -509,7 +511,7 @@ class AproxApi(UrlRequester):
         :returns: the cached response or None if no cached response exists
         """
         cache_filename = self.get_urlmap_cache_filename(sourceKey, gavs, addclassifiers, excludedSources,
-                                                        excludedSubgraphs, preset, presetParams, patcherIds,
+                                                        excludedSubgraphs, preset, mutator, patcherIds,
                                                         injectedBOMs)
         if os.path.isfile(cache_filename):
             with open(cache_filename) as cache_file:
@@ -519,7 +521,7 @@ class AproxApi(UrlRequester):
             return None
 
     def store_urlmap_cache(self, response, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
-                           presetParams, patcherIds, injectedBOMs, resolve):
+                           mutator, patcherIds, injectedBOMs, resolve):
         """
         Stores urlmap response to cache.
 
@@ -538,7 +540,7 @@ class AproxApi(UrlRequester):
         :param resolve: flag to tell AProx to run resolve for given roots
         """
         cache_filename = self.get_urlmap_cache_filename(sourceKey, gavs, addclassifiers, excludedSources,
-                                                        excludedSubgraphs, preset, presetParams, patcherIds,
+                                                        excludedSubgraphs, preset, mutator, patcherIds,
                                                         injectedBOMs)
         if not os.path.exists(self.CACHE_PATH):
             os.makedirs(self.CACHE_PATH)
@@ -546,7 +548,7 @@ class AproxApi(UrlRequester):
             cache_file.write(response)
 
     def get_urlmap_cache_filename(self, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
-                                  presetParams, patcherIds, injectedBOMs):
+                                  mutator, patcherIds, injectedBOMs):
         """
         Creates a cache filename to use for urlmap request.
 
@@ -565,7 +567,7 @@ class AproxApi(UrlRequester):
         cache_filename = "%s_|_%s_|_%s_|_%s_|_%s_|_%s_|_%s_|_%s_|_%s" % ("_".join(gavs), sourceKey, addclassifiers,
                                                                          "_".join(excludedSources),
 																		 "_".join(excludedSubgraphs), preset,
-                                                                         str(presetParams).replace("': u'", "-").replace("{u'", "").replace("'}", ""),
+                                                                         str(mutator),
                                                                          "_".join(patcherIds), "_".join(injectedBOMs))
         if len(cache_filename) > 243:
             sha256 = hashlib.sha256(cache_filename)
@@ -574,7 +576,7 @@ class AproxApi(UrlRequester):
                 cache_filename = sha256.hexdigest()
         return "%s/urlmap_%s.json" % (self.CACHE_PATH, cache_filename)
 
-    def get_cached_paths(self, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, presetParams,
+    def get_cached_paths(self, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, mutator,
                          patcherIds, injectedBOMs, resolve):
         """
         Gets cache paths response if exists for given parameters.
@@ -593,7 +595,7 @@ class AproxApi(UrlRequester):
         :returns: the cached response or None if no cached response exists
         """
         cache_filename = self.get_paths_cache_filename(sourceKey, roots, targets, excludedSources, excludedSubgraphs,
-                                                       preset, presetParams, patcherIds, injectedBOMs)
+                                                       preset, mutator, patcherIds, injectedBOMs)
         if os.path.isfile(cache_filename):
             with open(cache_filename) as cache_file:
                 return cache_file.read()
@@ -602,7 +604,7 @@ class AproxApi(UrlRequester):
             return None
 
     def store_paths_cache(self, response, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
-                          presetParams, patcherIds, injectedBOMs, resolve):
+                          mutator, patcherIds, injectedBOMs, resolve):
         """
         Stores paths response to cache.
 
@@ -620,7 +622,7 @@ class AproxApi(UrlRequester):
         :param resolve: flag to tell AProx to run resolve for given roots
         """
         cache_filename = self.get_paths_cache_filename(sourceKey, roots, targets, excludedSources, excludedSubgraphs,
-                                                       preset, presetParams, patcherIds, injectedBOMs)
+                                                       preset, mutator, patcherIds, injectedBOMs)
         cache_dirname = os.path.dirname(cache_filename)
         if not os.path.exists(cache_dirname):
             os.makedirs(cache_dirname)
@@ -628,7 +630,7 @@ class AproxApi(UrlRequester):
             cache_file.write(response)
 
     def get_paths_cache_filename(self, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
-                                 presetParams, patcherIds, injectedBOMs):
+                                 mutator, patcherIds, injectedBOMs):
         """
         Creates a cache filename to use for paths request.
 
@@ -646,7 +648,7 @@ class AproxApi(UrlRequester):
         cache_filename = "%s_|_%s_|_%s_|_%s_|_%s_|_%s_|_%s_|_%s_|_%s" % ("_".join(roots), "_".join(targets), sourceKey,
                                                                          "_".join(excludedSources),
                                                                          "_".join(excludedSubgraphs), preset,
-                                                                         str(presetParams).replace("': '", "-").replace("{'", "").replace("'}", ""),
+                                                                         str(mutator),
                                                                          "_".join(patcherIds), "-".join(injectedBOMs))
         if len(cache_filename) > 244:
             sha256 = hashlib.sha256(cache_filename)
