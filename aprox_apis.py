@@ -376,73 +376,75 @@ class AproxApi(UrlRequester):
         Requests creation of the paths from roots to targets. It creates the configfile, posts it to AProx server
         and process the result, which has following structure:
             {
-              "org.apache:apache:4" : [
-                [
-                  {
-                    "jsonVersion" : 1,
-                    "rel" : "DEPENDENCY",
-                    "declaring" : "org.apache.ant:ant:1.8.0",
-                    "target" : "xerces:xercesImpl:jar:2.9.0",
-                    "idx" : 1,
-                    "scope" : "runtime"
-                  }, {
-                    "jsonVersion" : 1,
-                    "rel" : "PARENT",
-                    "declaring" : "xerces:xercesImpl:2.9.0",
-                    "target" : "org.apache:apache:4",
-                    "idx" : 0
-                  }
+              "projects": {
+                "org.apache:apache:4" : [
+                  [
+                    {
+                      "jsonVersion" : 1,
+                      "rel" : "DEPENDENCY",
+                      "declaring" : "org.apache.ant:ant:1.8.0",
+                      "target" : "xerces:xercesImpl:jar:2.9.0",
+                      "idx" : 1,
+                      "scope" : "runtime"
+                    }, {
+                      "jsonVersion" : 1,
+                      "rel" : "PARENT",
+                      "declaring" : "xerces:xercesImpl:2.9.0",
+                      "target" : "org.apache:apache:4",
+                      "idx" : 0
+                    }
+                  ]
+                ],
+                "org.apache:apache:3" : [
+                  [
+                    {
+                      "jsonVersion" : 1,
+                      "rel" : "DEPENDENCY",
+                      "declaring" : "org.apache.ant:ant:1.8.0",
+                      "target" : "xerces:xercesImpl:jar:2.9.0",
+                      "idx" : 1,
+                      "scope" : "runtime"
+                    }, {
+                      "jsonVersion" : 1,
+                      "rel" : "DEPENDENCY",
+                      "declaring" : "xerces:xercesImpl:2.9.0",
+                      "target" : "xml-apis:xml-apis:jar:1.3.04",
+                      "idx" : 0,
+                      "scope" : "compile"
+                    }, {
+                      "jsonVersion" : 1,
+                      "rel" : "PARENT",
+                      "declaring" : "xml-apis:xml-apis:1.3.04",
+                      "target" : "org.apache:apache:3",
+                      "idx" : 0
+                    }
+                  ],
+                  [
+                    {
+                      "jsonVersion" : 1,
+                      "rel" : "DEPENDENCY",
+                      "declaring" : "org.apache.ant:ant:1.8.0",
+                      "target" : "xerces:xercesImpl:jar:2.9.0",
+                      "idx" : 1,
+                      "scope" : "runtime"
+                    }, {
+                      "jsonVersion" : 1,
+                      "rel" : "DEPENDENCY",
+                      "declaring" : "xerces:xercesImpl:2.9.0",
+                      "target" : "xml-resolver:xml-resolver:jar:1.2",
+                      "idx" : 1,
+                      "scope" : "compile"
+                    }, {
+                      "jsonVersion" : 1,
+                      "rel" : "PARENT",
+                      "declaring" : "xml-resolver:xml-resolver:1.2",
+                      "target" : "org.apache:apache:3",
+                      "idx" : 0
+                    }
+                  ],
+                  ...
                 ]
-              ],
-              "org.apache:apache:3" : [
-                [
-                  {
-                    "jsonVersion" : 1,
-                    "rel" : "DEPENDENCY",
-                    "declaring" : "org.apache.ant:ant:1.8.0",
-                    "target" : "xerces:xercesImpl:jar:2.9.0",
-                    "idx" : 1,
-                    "scope" : "runtime"
-                  }, {
-                    "jsonVersion" : 1,
-                    "rel" : "DEPENDENCY",
-                    "declaring" : "xerces:xercesImpl:2.9.0",
-                    "target" : "xml-apis:xml-apis:jar:1.3.04",
-                    "idx" : 0,
-                    "scope" : "compile"
-                  }, {
-                    "jsonVersion" : 1,
-                    "rel" : "PARENT",
-                    "declaring" : "xml-apis:xml-apis:1.3.04",
-                    "target" : "org.apache:apache:3",
-                    "idx" : 0
-                  }
-                ],
-                [
-                  {
-                    "jsonVersion" : 1,
-                    "rel" : "DEPENDENCY",
-                    "declaring" : "org.apache.ant:ant:1.8.0",
-                    "target" : "xerces:xercesImpl:jar:2.9.0",
-                    "idx" : 1,
-                    "scope" : "runtime"
-                  }, {
-                    "jsonVersion" : 1,
-                    "rel" : "DEPENDENCY",
-                    "declaring" : "xerces:xercesImpl:2.9.0",
-                    "target" : "xml-resolver:xml-resolver:jar:1.2",
-                    "idx" : 1,
-                    "scope" : "compile"
-                  }, {
-                    "jsonVersion" : 1,
-                    "rel" : "PARENT",
-                    "declaring" : "xml-resolver:xml-resolver:1.2",
-                    "target" : "org.apache:apache:3",
-                    "idx" : 0
-                  }
-                ],
-                ...
-              ]
+              }
             }
 
         :param wsid: AProx workspace ID
