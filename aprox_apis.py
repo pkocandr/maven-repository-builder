@@ -168,29 +168,31 @@ class AproxApi(UrlRequester):
         Requests creation of the urlmap. It creates the configfile, posts it to AProx server
         and process the result, which has following structure:
             {
-                "group:artifact:1.0": {
-                    "files": [
-                        "artifact-1.0.pom",
-                        "artifact-1.0.pom.md5",
-                        "artifact-1.0.pom.sha1"
-                    ],
-                    "repoUrl": "http://maven.repo.org/repos/repo1/"
-                },
-                "group:artifact2:1.1": {
-                    "files": [
-                        "artifact2-1.1.pom",
-                        "artifact2-1.1.pom.md5",
-                        "artifact2-1.1.pom.sha1"
-                        "artifact2-1.1.jar",
-                        "artifact2-1.1.jar.md5",
-                        "artifact2-1.1.jar.sha1"
-                        "artifact2-1.1-sources.jar",
-                        "artifact2-1.1-sources.jar.md5",
-                        "artifact2-1.1-sources.jar.sha1"
-                    ],
-                    "repoUrl": "http://maven.repo.org/repos/repo1/"
-                },
-                ...
+                "projects": {
+                    "group:artifact:1.0": {
+                        "files": [
+                            "artifact-1.0.pom",
+                            "artifact-1.0.pom.md5",
+                            "artifact-1.0.pom.sha1"
+                        ],
+                        "repoUrl": "http://maven.repo.org/repos/repo1/"
+                    },
+                    "group:artifact2:1.1": {
+                        "files": [
+                            "artifact2-1.1.pom",
+                            "artifact2-1.1.pom.md5",
+                            "artifact2-1.1.pom.sha1"
+                            "artifact2-1.1.jar",
+                            "artifact2-1.1.jar.md5",
+                            "artifact2-1.1.jar.sha1"
+                            "artifact2-1.1-sources.jar",
+                            "artifact2-1.1-sources.jar.md5",
+                            "artifact2-1.1-sources.jar.sha1"
+                        ],
+                        "repoUrl": "http://maven.repo.org/repos/repo1/"
+                    },
+                    ...
+                }
             }
 
         :param wsid: AProx workspace ID
@@ -232,29 +234,31 @@ class AproxApi(UrlRequester):
         Requests creation of the urlmap. It creates the configfile, posts it to AProx server
         and process the result, which has following structure:
             {
-                "group:artifact:1.0": {
-                    "files": [
-                        "artifact-1.0.pom",
-                        "artifact-1.0.pom.md5",
-                        "artifact-1.0.pom.sha1"
-                    ],
-                    "repoUrl": "http://maven.repo.org/repos/repo1/"
-                },
-                "group:artifact2:1.1": {
-                    "files": [
-                        "artifact2-1.1.pom",
-                        "artifact2-1.1.pom.md5",
-                        "artifact2-1.1.pom.sha1"
-                        "artifact2-1.1.jar",
-                        "artifact2-1.1.jar.md5",
-                        "artifact2-1.1.jar.sha1"
-                        "artifact2-1.1-sources.jar",
-                        "artifact2-1.1-sources.jar.md5",
-                        "artifact2-1.1-sources.jar.sha1"
-                    ],
-                    "repoUrl": "http://maven.repo.org/repos/repo1/"
-                },
-                ...
+                "projects": {
+                    "group:artifact:1.0": {
+                        "files": [
+                            "artifact-1.0.pom",
+                            "artifact-1.0.pom.md5",
+                            "artifact-1.0.pom.sha1"
+                        ],
+                        "repoUrl": "http://maven.repo.org/repos/repo1/"
+                    },
+                    "group:artifact2:1.1": {
+                        "files": [
+                            "artifact2-1.1.pom",
+                            "artifact2-1.1.pom.md5",
+                            "artifact2-1.1.pom.sha1"
+                            "artifact2-1.1.jar",
+                            "artifact2-1.1.jar.md5",
+                            "artifact2-1.1.jar.sha1"
+                            "artifact2-1.1-sources.jar",
+                            "artifact2-1.1-sources.jar.md5",
+                            "artifact2-1.1-sources.jar.sha1"
+                        ],
+                        "repoUrl": "http://maven.repo.org/repos/repo1/"
+                    },
+                    ...
+                }
             }
 
         :param wsid: AProx workspace ID

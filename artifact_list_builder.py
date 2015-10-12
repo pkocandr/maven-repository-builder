@@ -428,6 +428,8 @@ class ArtifactListBuilder:
 
         # parse returned map
         artifacts = {}
+        if "projects" in urlmap:
+            urlmap = urlmap["projects"]
         for gav in urlmap:
             artifact = MavenArtifact.createFromGAV(gav)
             groupId = artifact.groupId
@@ -453,6 +455,8 @@ class ArtifactListBuilder:
             else:
                 path_dict = aprox.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
                                                 preset, mutator, patcherIds, injectedBOMs, False)
+            if "projects" in path_dict:
+                path_dict = path_dict["projects"]
             if path_dict:
                 for ma in artifacts.keys():
                     for key in path_dict.keys():
