@@ -488,6 +488,10 @@ class AproxApi(UrlRequester):
 
         response = self._postUrl(url, data=data, headers=headers)
 
+        if response.status == 404:
+            url = self._aprox_url + self.API_PATH + "depgraph/graph/paths"
+            response = self._postUrl(url, data=data, headers=headers)
+
         if response.status == 200:
             responseContent = response.read()
             logging.debug("AProx paths created. Response content:\n%s", responseContent)
