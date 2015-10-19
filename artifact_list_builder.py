@@ -462,7 +462,11 @@ class ArtifactListBuilder:
                     for key in path_dict.keys():
                         if ma.getGAV() == key:
                             gav_paths = path_dict[key]
+                            if type(gav_paths) is dict:
+                                gav_paths = gav_paths["paths"]
                             for gav_path in gav_paths:
+                                if type(gav_path) is dict:
+                                    gav_path = gav_path["pathParts"]
                                 rel_path = []
                                 for gav_rel in gav_path:
                                     declaring = MavenArtifact.createFromGAV(gav_rel["declaring"])
