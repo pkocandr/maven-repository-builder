@@ -211,7 +211,7 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
         artifactids = multiversion_gas[groupid]
         for artifactid in sorted(artifactids.keys()):
             html += ("<li><a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a></li><ul>" + \
-                     "").format(artifactid=artifactid)
+                     "").format(artifactid=artifactid, groupid=groupid)
             artifacts = artifactids[artifactid]
             for version in sorted(artifacts.keys()):
                 gav = "%s:%s:%s" % (groupid, artifactid, version)
@@ -226,7 +226,7 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
         artifactids = malformed_versions[groupid]
         for artifactid in sorted(artifactids.keys()):
             html += ("<li><a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a></li><ul>" + \
-                     "").format(artifactid=artifactid)
+                     "").format(artifactid=artifactid, groupid=groupid)
             artifacts = artifactids[artifactid]
             for version in sorted(artifacts.keys()):
                 gav = "%s:%s:%s" % (groupid, artifactid, version)
