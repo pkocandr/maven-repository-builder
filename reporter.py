@@ -5,6 +5,7 @@ import shutil
 import zipfile
 
 from maven_artifact import MavenArtifact
+from maven_repo_util import slashAtTheEnd
 
 
 def generate_report(output, artifact_sources, artifact_list, report_name):
