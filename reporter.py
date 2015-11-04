@@ -126,7 +126,7 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
         else:
             html += li
     html += examples.replace("<li>", "<li class=\"example\">")
-    html += "</ul></div><div id=\"pom\"><iframe src=\"{repo_url}{pom}\"/></div></body></html>".format(repo_url=norm_repo_url,
+    html += "</ul></div><div id=\"pom\"><iframe src=\"{repo_url}{pom_path}\"/></div></body></html>".format(repo_url=norm_repo_url,
                                                                                                       pom_path=ma.getPomFilepath())
     with open(os.path.join(output, "pages", "artifact_version_%s.html" % ma.getGAV().replace(":", "$")), "w") as htmlfile:
         htmlfile.write(html)
