@@ -52,7 +52,7 @@ def generate_report(output, artifact_sources, artifact_list, report_name):
                 art_spec = versions[version]
 
                 ma = MavenArtifact.createFromGAV("%s:%s:%s" % (groupid, artifactid, version))
-                generate_artifact_page(ma, roots, art_spec.paths, art_spec.url, groupids)
+                generate_artifact_page(ma, roots, art_spec.paths, art_spec.url, output, groupids)
             generate_artifactid_page(groupid, artifactid, versions, output)
         generate_groupid_page(groupid, artifactids, output)
     generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions, output, report_name)
