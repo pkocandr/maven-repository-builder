@@ -125,8 +125,8 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
         else:
             html += li
     html += examples.replace("<li>", "<li class=\"example\">")
-    html += "</ul></div><div class=\"pom\"><iframe src=\"{repo_url}{pom}\"/></div></body></html>".format(repo_url=norm_repo_url,
-                                                                                                         pom_path=ma.getPomFilepath())
+    html += "</ul></div><div id=\"pom\"><iframe src=\"{repo_url}{pom}\"/></div></body></html>".format(repo_url=norm_repo_url,
+                                                                                                      pom_path=ma.getPomFilepath())
     with open(os.path.join(output, "pages", "artifact_version_%s.html" % ma.getGAV().replace(":", "$")), "w") as htmlfile:
         htmlfile.write(html)
 
@@ -259,7 +259,7 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
 
 def generate_css(output):
     css = ".error, .error a { color: red }\n.example, .example a { color: grey }\n.relation { color: grey; font-size: 0.8em }\n#paths li { padding-bottom: 0.5em }\n" \
-          ".excluded { text-decoration: line-through }"
+          ".excluded { text-decoration: line-through }\n#pom iframe {width: 100%; height: 60em;}"
     with open(os.path.join(output, "pages", "style.css"), "w") as cssfile:
         cssfile.write(css)
 
