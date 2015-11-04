@@ -52,14 +52,15 @@ def generate_report(output, artifact_sources, artifact_list, report_name):
                 art_spec = versions[version]
 
                 ma = MavenArtifact.createFromGAV("%s:%s:%s" % (groupid, artifactid, version))
-                generate_artifact_page(ma, roots, art_spec.paths, output, groupids)
+                generate_artifact_page(ma, roots, art_spec.paths, art_spec.url, output, groupids)
             generate_artifactid_page(groupid, artifactid, versions, output)
         generate_groupid_page(groupid, artifactids, output)
     generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions, output, report_name)
     generate_css(output)
 
 
-def generate_artifact_page(ma, roots, paths, output, groupids):
+def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
+    norm_repo_url = slashAtTheEnd(repo_url)
     html = ("<html><head><title>Artifact {gav}</title>" + \
             "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"></head><body>" + \
             "<div class=\"header\"><a href=\"../index.html\">Back to repository summary</a></div>" + \
@@ -91,8 +92,9 @@ def generate_artifact_page(ma, roots, paths, output, groupids):
                           gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId,
                           gav_filename=dec.getGAV().replace(":", "$"))
                 else:
-                    li += "<span class=\"excluded\" title=\"{gav} (excluded)\">{daid}</span>".format(
-                          gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId)
+                    li += "<a href=\"{repo_url}{pom_path}\" class=\"excluded\" title=\"{gav} (excluded, the link tries to reference the pom.xml in the same" \
+                        + " repo as this artifact)\">{daid}</a>".format(gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId, 
+                                                                        repo_url=norm_repo_url, pom_path=dec.getPomFilepath())
                 li += " <span class=\"relation\">"
                 if rel_type is None:
                     li += "unknown relation"
@@ -123,7 +125,8 @@ def generate_artifact_page(ma, roots, paths, output, groupids):
         else:
             html += li
     html += examples.replace("<li>", "<li class=\"example\">")
-    html += "</ul></div></body></html>"
+    html += "</ul></div><div id=\"pom\"><iframe src=\"{repo_url}{pom}\"/></div></body></html>".format(repo_url=norm_repo_url,
+                                                                                                      pom_path=ma.getPomFilepath())
     with open(os.path.join(output, "pages", "artifact_version_%s.html" % ma.getGAV().replace(":", "$")), "w") as htmlfile:
         htmlfile.write(html)
 
@@ -256,7 +259,7 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
 
 def generate_css(output):
     css = ".error, .error a { color: red }\n.example, .example a { color: grey }\n.relation { color: grey; font-size: 0.8em }\n#paths li { padding-bottom: 0.5em }\n" \
-          ".excluded { text-decoration: line-through }"
+          ".excluded { text-decoration: line-through }\n#pom iframe {width: 100%; height: 60em;}"
     with open(os.path.join(output, "pages", "style.css"), "w") as cssfile:
         cssfile.write(css)
 
