@@ -1001,6 +1001,16 @@ class ArtifactRelationship():
         self.rel_type = rel_type
         self.extra = extra
 
+    def __cmp__(self, other):
+        result = cmp(self.declaring, other.declaring)
+        if result == 0:
+            result = cmp(self.rel_type, other.rel_type)
+        if result == 0:
+            result = cmp(self.extra, other.extra)
+        if result == 0:
+            result = cmp(self.target, other.target)
+        return result
+
 
 class ArtifactType():
     """
