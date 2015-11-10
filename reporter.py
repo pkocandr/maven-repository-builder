@@ -93,8 +93,8 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
                           gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId,
                           gav_filename=dec.getGAV().replace(":", "$"))
                 else:
-                    li += "<a href=\"{repo_url}{pom_path}\" class=\"excluded\" title=\"{gav} (excluded, the link tries to reference the pom.xml in the same" \
-                        + " repo as this artifact)\">{daid}</a>".format(gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId, 
+                    li += ("<a href=\"{repo_url}{pom_path}\" class=\"excluded\" title=\"{gav} (excluded, the link tries to reference the pom.xml in the same" \
+                        + " repo as this artifact)\">{daid}</a>").format(gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId, 
                                                                         repo_url=norm_repo_url, pom_path=dec.getPomFilepath())
                 li += " <span class=\"relation\">"
                 if rel_type is None:
