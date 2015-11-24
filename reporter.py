@@ -84,7 +84,11 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
     for path in sorted(paths):
         rma = path[0].declaring
         li = "<li>"
+        is_inherited_or_mixin = False
         for rel in path:
+            if hasattr(rel, "inherited") and rel.inherited or hasattr(rel, "mixin") and rel.mixin:
+                is_inherited_or_mixin = True
+                break
             dec = rel.declaring
             if dec:
                 rel_type = rel.rel_type
@@ -94,7 +98,7 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
                           gav_filename=dec.getGAV().replace(":", "$"))
                 else:
                     li += ("<a href=\"{repo_url}{pom_path}\" class=\"excluded\" title=\"{gav} (excluded, the link tries to reference the pom.xml in the same" \
-                        + " repo as this artifact)\">{daid}</a>").format(gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId, 
+                        + " repo as this artifact)\">{daid}</a>").format(gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId,
                                                                         repo_url=norm_repo_url, pom_path=dec.getPomFilepath())
                 li += " <span class=\"relation\">"
                 if rel_type is None:
@@ -117,14 +121,15 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
                 li += "</span> "
             else:
                 li += "... <span class=\"relation\">unknown relation</span> "
-        leaf = path[-1].target
-        gav = leaf.getGAV()
-        li += "<a href=\"artifact_version_{gav_filename}.html\" title=\"{gav}\">{aid}</a></li>".format(
-              gav=gav.replace(":", " : "), gav_filename=gav.replace(":", "$"), aid=leaf.artifactId)
-        if rma.is_example():
-            examples += li
-        else:
-            html += li
+        if not is_inherited_or_mixin:
+            leaf = path[-1].target
+            gav = leaf.getGAV()
+            li += "<a href=\"artifact_version_{gav_filename}.html\" title=\"{gav}\">{aid}</a></li>".format(
+                gav=gav.replace(":", " : "), gav_filename=gav.replace(":", "$"), aid=leaf.artifactId)
+            if rma.is_example():
+                examples += li
+            else:
+                html += li
     html += examples.replace("<li>", "<li class=\"example\">")
     html += "</ul></div><div id=\"pom\"><iframe src=\"{repo_url}{pom_path}\"/></div></body></html>".format(repo_url=norm_repo_url,
                                                                                                       pom_path=ma.getPomFilepath())
