@@ -460,7 +460,11 @@ class ArtifactListBuilder:
             if path_dict:
                 for ma in artifacts.keys():
                     for key in path_dict.keys():
-                        if ma.getGAV() == key:
+                        key_gav = key
+                        if key.count(":") > 2:
+                            key_split = key.split(":")
+                            key_gav = ":".join([key_split[0], key_split[1], key_split[-1]])
+                        if ma.getGAV() == key_gav:
                             gav_paths = path_dict[key]
                             if type(gav_paths) is dict:
                                 gav_paths = gav_paths["paths"]
