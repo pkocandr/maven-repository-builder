@@ -477,7 +477,9 @@ class ArtifactListBuilder:
                                     target = MavenArtifact.createFromGAV(maven_repo_util.gatvc_to_gatcv(gav_rel["target"]))
                                     rel_type = gav_rel["type"] if "type" in gav_rel else gav_rel["rel"]
                                     if rel_type == "DEPENDENCY":
-                                        rel = ArtifactRelationship(declaring, target, rel_type, gav_rel["scope"])
+                                        optional_suffix = " optional" if "optional" in gav_rel and gav_rel["optional"] else ""
+                                        rel = ArtifactRelationship(declaring, target, rel_type,
+                                                                   "%s%s" % (gav_rel["scope"], optional_suffix))
                                     elif rel_type == "PLUGIN_DEP":
                                         rel = ArtifactRelationship(declaring, target, rel_type, gav_rel["plugin"])
                                     else:

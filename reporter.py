@@ -45,6 +45,7 @@ def generate_report(output, artifact_sources, artifact_list, report_name):
                     if not version_pattern.match(version):
                         malformed_versions.setdefault(groupid, dict()).setdefault(artifactid, dict())[version] = groupids[groupid][artifactid][version]
 
+    optional_artifacts = dict()
     for groupid in groupids.keys():
         artifactids = groupids[groupid]
         for artifactid in artifactids.keys():
@@ -53,14 +54,14 @@ def generate_report(output, artifact_sources, artifact_list, report_name):
                 art_spec = versions[version]
 
                 ma = MavenArtifact.createFromGAV("%s:%s:%s" % (groupid, artifactid, version))
-                generate_artifact_page(ma, roots, art_spec.paths, art_spec.url, output, groupids)
+                generate_artifact_page(ma, roots, art_spec.paths, art_spec.url, output, groupids, optional_artifacts)
             generate_artifactid_page(groupid, artifactid, versions, output)
         generate_groupid_page(groupid, artifactids, output)
-    generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions, output, report_name)
+    generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts)
     generate_css(output)
 
 
-def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
+def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optional_artifacts):
     norm_repo_url = slashAtTheEnd(repo_url)
     html = ("<html><head><title>Artifact {gav}</title>" + \
             "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"></head><body>" + \
@@ -81,7 +82,10 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
         else:
             html += li
 
+    all_paths_optional = True
+    directly_optional = False
     for path in sorted(paths):
+        optional_path = False
         rma = path[0].declaring
         li = "<li>"
         is_inherited_or_mixin = False
@@ -104,10 +108,15 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
                 if rel_type is None:
                     li += "unknown relation"
                 elif rel_type == "DEPENDENCY":
-                    if rel.extra == "embedded":
-                        li += "embeds"
+                    if "embedded" in rel.extra:
+                        if "optional" in rel.extra:
+                            li += "embeds ?optionally?"
+                        else:
+                            li += "embeds"
                     else:
                         li += "depends on (scope %s)" % rel.extra
+                    if "optional" in rel.extra:
+                        optional_path = True
                 elif rel_type == "PARENT":
                     li += "has parent"
                 elif rel_type == "PLUGIN":
@@ -130,11 +139,15 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids):
                 examples += li
             else:
                 html += li
+            all_paths_optional &= optional_path
+            directly_optional = ("optional" in path[-1].extra)
     html += examples.replace("<li>", "<li class=\"example\">")
     html += "</ul></div><div id=\"pom\"><iframe src=\"{repo_url}{pom_path}\"/></div></body></html>".format(repo_url=norm_repo_url,
                                                                                                       pom_path=ma.getPomFilepath())
     with open(os.path.join(output, "pages", "artifact_version_%s.html" % ma.getGAV().replace(":", "$")), "w") as htmlfile:
         htmlfile.write(html)
+    if all_paths_optional:
+        optional_artifacts[ma] = directly_optional
 
 
 def generate_artifactid_page(groupid, artifactid, artifacts, output):
@@ -177,7 +190,7 @@ def generate_groupid_page(groupid, artifactids, output):
         htmlfile.write(html)
 
 
-def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions, output, report_name):
+def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts):
     html = ("<html><head><title>Repository {report_name}</title>" + \
             "<link rel=\"stylesheet\" type=\"text/css\" href=\"pages/style.css\"></head><body>" + \
             "<div class=\"artifact\"><h1>{report_name}</h1>" + \
@@ -243,6 +256,26 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
                         gav=gav, gav_filename=gav.replace(":", "$"))
             html += "</ul>"
         html += "</ul>"
+    html += "</ul><h2>Optional artifacts</h2><h3>Direct optionals</h3><ul>"
+    for ma in sorted(optional_artifacts.keys()):
+        if optional_artifacts[ma]:
+            gav_filename = "%s$%s$%s" % (ma.groupId, ma.artifactId, ma.version)
+            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a> : " + \
+                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a> : " + \
+                     "<a href=\"pages/artifact_version_{gav_filename}.html\">{gav}</a></li>").format(groupid=ma.groupId,
+                                                                                                     artifactid=ma.artifactId,
+                                                                                                     version=ma.version,
+                                                                                                     gav_filename=gav_filename)
+    html += "</ul><h3>Transitive optionals</h3><ul>"
+    for ma in sorted(optional_artifacts.keys()):
+        if not optional_artifacts[ma]:
+            gav_filename = "%s$%s$%s" % (ma.groupId, ma.artifactId, ma.version)
+            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a> : " + \
+                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a> : " + \
+                     "<a href=\"pages/artifact_version_{gav_filename}.html\">{gav}</a></li>").format(groupid=ma.groupId,
+                                                                                                     artifactid=ma.artifactId,
+                                                                                                     version=ma.version,
+                                                                                                     gav_filename=gav_filename)
     html += "</ul><h2>All artifacts</h2><ul>"
     for groupid in sorted(groupids.keys()):
         html += "<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a></li><ul>".format(

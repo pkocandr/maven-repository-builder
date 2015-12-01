@@ -191,3 +191,12 @@ class MavenArtifact:
 
     def __hash__(self):
         return hash(repr(self))
+
+    def __cmp__(self, other):
+        if other is None:
+            return 1
+        else:
+            result = cmp(self.getGAV(), other.getGAV())
+            if result == 0:
+                result = cmp(self.getGATCV(), other.getGATCV())
+            return result
