@@ -146,7 +146,7 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
                                                                                                       pom_path=ma.getPomFilepath())
     with open(os.path.join(output, "pages", "artifact_version_%s.html" % ma.getGAV().replace(":", "$")), "w") as htmlfile:
         htmlfile.write(html)
-    if all_paths_optional:
+    if len(paths) > 0 and all_paths_optional:
         optional_artifacts[ma] = directly_optional
 
 
