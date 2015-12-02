@@ -140,7 +140,7 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
             else:
                 html += li
             all_paths_optional &= optional_path
-            directly_optional = ("optional" in path[-1].extra)
+            directly_optional = (path[-1].rel_type == "DEPENDENCY" and "optional" in path[-1].extra)
     html += examples.replace("<li>", "<li class=\"example\">")
     html += "</ul></div><div id=\"pom\"><iframe src=\"{repo_url}{pom_path}\"/></div></body></html>".format(repo_url=norm_repo_url,
                                                                                                       pom_path=ma.getPomFilepath())
