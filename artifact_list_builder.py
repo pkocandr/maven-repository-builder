@@ -838,7 +838,7 @@ class ArtifactListBuilder:
         """Parse maven dependency:list output and return a list of GAVs"""
         regexComment = re.compile('#.*$')
         # Match pattern groupId:artifactId:[type:][classifier:]version[:scope]
-        regexGAV = re.compile('(([\w\-.]+:){2,3}([\w\-.]+:)?([\d][\w\-.]+))(:[\w]*\S)?')
+        regexGAV = re.compile('(([\w\-.]+:){2,3}([\w\-.]+:)?([\d][\w\-.]*))(:[\w]*\S)?')
         gavList = []
         for nextLine in depList:
             nextLine = regexComment.sub('', nextLine)
