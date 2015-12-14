@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import time
 import urllib
 import urlparse
 from configuration import Configuration
@@ -85,33 +86,6 @@ class AproxApi(UrlRequester):
     def __init__(self, aprox_url):
         self._aprox_url = slashAtTheEnd(aprox_url)
 
-    def createWorkspace(self):
-        """
-        Creates new workspace. Example of returned object:
-            {
-                "config": {
-                    "forceVersions": true
-                },
-                "selectedVersions": {},
-                "wildcardSelectedVersions": {},
-                "id": "1",
-                "open": true,
-                "lastAccess": 1377090886682
-            }
-
-        :returns: created workspace structure as returned by AProx
-        """
-        url = self._aprox_url + self.API_PATH + "depgraph/ws/new"
-        logging.info("Creating new AProx workspace")
-        response = self._postUrl(url)
-        if response.status == 201:
-            responseJson = json.loads(response.read())
-            logging.info("Created AProx workspace with ID %s", responseJson["id"])
-            return responseJson
-        else:
-            raise Exception("Failed to create new AProx workspace, status code %i, content: %s"
-                            % (response.status, response.read()))
-
     def deleteWorkspace(self, wsid):
         """
         Deletes a specified workspace.
@@ -123,7 +97,7 @@ class AproxApi(UrlRequester):
         url = (self._aprox_url + self.API_PATH + "depgraph/ws/%s") % strWsid
         logging.info("Deleting AProx workspace with ID %s", strWsid)
         status = self._deleteUrl(url)
-        if status == 200:
+        if status / 10 == 20: # any 20x status code
             logging.info("AProx workspace with ID %s was deleted", strWsid)
             return True
         else:
@@ -145,9 +119,8 @@ class AproxApi(UrlRequester):
             deleteWS = False
 
             if not wsid:
-                # Create workspace
-                ws = self.createWorkspace()
-                wsid = ws["id"]
+                # Generate workspace id
+                wsid = "temp_%f.2" % time.time()
                 deleteWS = True
 
             response = self.urlmap_response(wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs,
@@ -214,9 +187,8 @@ class AproxApi(UrlRequester):
         deleteWS = False
 
         if not wsid:
-            # Create workspace
-            ws = self.createWorkspace()
-            wsid = ws["id"]
+            # Generate workspace id
+            wsid = "temp_%f.2" % time.time()
             deleteWS = True
 
         response = self.urlmap_response(wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs,
@@ -331,9 +303,8 @@ class AproxApi(UrlRequester):
             deleteWS = False
 
             if not wsid:
-                # Create workspace
-                ws = self.createWorkspace()
-                wsid = ws["id"]
+                # Generate workspace id
+                wsid = "temp_%f.2" % time.time()
                 deleteWS = True
 
             response = self.paths_response(wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
@@ -356,9 +327,8 @@ class AproxApi(UrlRequester):
         deleteWS = False
 
         if not wsid:
-            # Create workspace
-            ws = self.createWorkspace()
-            wsid = ws["id"]
+            # Generate workspace id
+            wsid = "temp_%f.2" % time.time()
             deleteWS = True
 
         response = self.paths_response(wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
