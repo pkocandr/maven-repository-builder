@@ -263,11 +263,10 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
             gav_filename = "%s$%s$%s" % (ma.groupId, ma.artifactId, ma.version)
             html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a> : " + \
                      "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a> : " + \
-                     "<a href=\"pages/artifact_version_{gav_filename}.html\">{gav}</a></li>").format(groupid=ma.groupId,
-                                                                                                     artifactid=ma.artifactId,
-                                                                                                     version=ma.version,
-                                                                                                     gav_filename=gav_filename,
-                                                                                                     gav=gav)
+                     "<a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>").format(groupid=ma.groupId,
+                                                                                                         artifactid=ma.artifactId,
+                                                                                                         version=ma.version,
+                                                                                                         gav_filename=gav_filename)
     html += "</ul><h3>Transitive optionals</h3><ul>"
     for ma in sorted(optional_artifacts.keys()):
         if not optional_artifacts[ma]:
