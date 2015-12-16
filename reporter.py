@@ -97,13 +97,16 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
             if dec:
                 rel_type = rel.rel_type
                 if dec.groupId in groupids and dec.artifactId in groupids[dec.groupId] and dec.version in groupids[dec.groupId][dec.artifactId]:
-                    li += "<a href=\"artifact_version_{gav_filename}.html\" title=\"{gav}\">{daid}</a>".format(
+                    add_params = " class=\"optional\"" if optional_path else ""
+                    li += "<a href=\"artifact_version_{gav_filename}.html\" title=\"{gav}\"{add_params}>{daid}</a>".format(
                           gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId,
-                          gav_filename=dec.getGAV().replace(":", "$"))
+                          gav_filename=dec.getGAV().replace(":", "$"), add_params=add_params)
                 else:
-                    li += ("<a href=\"{repo_url}{pom_path}\" class=\"excluded\" title=\"{gav} (excluded, the link tries to reference the pom.xml in the same" \
-                        + " repo as this artifact)\">{daid}</a>").format(gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId,
-                                                                        repo_url=norm_repo_url, pom_path=dec.getPomFilepath())
+                    add_params = " class=\"excluded%s\"" % " optional" if optional_path else ""
+                    li += ("<a href=\"{repo_url}{pom_path}\" title=\"{gav} (excluded, the link tries to reference the pom.xml in the same" \
+                        + " repo as this artifact)\"{add_params}>{daid}</a>").format(gav=dec.getGAV().replace(":", " : "), daid=dec.artifactId,
+                                                                                     repo_url=norm_repo_url, pom_path=dec.getPomFilepath(),
+                                                                                     add_params=add_params)
                 li += " <span class=\"relation\">"
                 if rel_type is None:
                     li += "unknown relation"
@@ -133,8 +136,9 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
         if not is_inherited_or_mixin:
             leaf = path[-1].target
             gav = leaf.getGAV()
-            li += "<a href=\"artifact_version_{gav_filename}.html\" title=\"{gav}\">{aid}</a></li>".format(
-                gav=gav.replace(":", " : "), gav_filename=gav.replace(":", "$"), aid=leaf.artifactId)
+            add_params = " class=\"optional\"" if optional_path else ""
+            li += "<a href=\"artifact_version_{gav_filename}.html\" title=\"{gav}\"{add_params}>{aid}</a></li>".format(
+                gav=gav.replace(":", " : "), gav_filename=gav.replace(":", "$"), aid=leaf.artifactId, add_params=add_params)
             if rma.is_example():
                 examples += li
             else:
@@ -274,9 +278,9 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
             html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a> : " + \
                      "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a> : " + \
                      "<a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>").format(groupid=ma.groupId,
-                                                                                                     artifactid=ma.artifactId,
-                                                                                                     version=ma.version,
-                                                                                                     gav_filename=gav_filename)
+                                                                                                         artifactid=ma.artifactId,
+                                                                                                         version=ma.version,
+                                                                                                         gav_filename=gav_filename)
     html += "</ul><h2>All artifacts</h2><ul>"
     for groupid in sorted(groupids.keys()):
         html += "<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a></li><ul>".format(
@@ -298,8 +302,15 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
 
 
 def generate_css(output):
-    css = ".error, .error a { color: red }\n.example, .example a { color: grey }\n.relation { color: grey; font-size: 0.8em }\n#paths li { padding-bottom: 0.5em }\n" \
-          ".excluded { text-decoration: line-through }\n#pom iframe {width: 100%; height: 60em;}"
+    css = "body { background-color: white }\n"
+        + "a { color: blue }\n" \
+        + ".error, .error a { color: red }\n" \
+        + ".excluded { text-decoration: line-through }\n" \
+        + ".example, .example a { color: cornflowerblue }\n" \
+        + ".optional { color: grey }\n" \
+        + ".relation { color: grey; font-size: 0.8em }\n" \
+        + "#paths li { padding-bottom: 1em }\n" \
+        + "#pom iframe {width: 100%; height: 60em;}"
     with open(os.path.join(output, "pages", "style.css"), "w") as cssfile:
         cssfile.write(css)
 
