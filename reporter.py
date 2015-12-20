@@ -8,7 +8,7 @@ from maven_artifact import MavenArtifact
 from maven_repo_util import slashAtTheEnd
 
 
-def generate_report(output, artifact_sources, artifact_list, report_name):
+def generate_report(output, config, artifact_list, report_name):
     """
     Generates report. The report consists of a summary page, groupId pages, artifactId pages and leaf artifact pages.
     Summary page contains list of roots, list of BOMs, list of multi-version artifacts, links to all artifacts and list
@@ -23,7 +23,7 @@ def generate_report(output, artifact_sources, artifact_list, report_name):
     os.makedirs(os.path.join(output, "pages"))
 
     roots = []
-    for artifact_source in artifact_sources:
+    for artifact_source in config.artifactSources:
         if artifact_source["type"] == "dependency-graph":
             roots.extend(artifact_source['top-level-gavs'])
 
@@ -54,7 +54,7 @@ def generate_report(output, artifact_sources, artifact_list, report_name):
                 generate_artifact_page(ma, roots, art_spec.paths, art_spec.url, output, groupids, optional_artifacts)
             generate_artifactid_page(groupid, artifactid, versions, output)
         generate_groupid_page(groupid, artifactids, output)
-    generate_summary(artifact_sources, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts)
+    generate_summary(config, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts)
     generate_css(output)
 
 
@@ -191,7 +191,7 @@ def generate_groupid_page(groupid, artifactids, output):
         htmlfile.write(html)
 
 
-def generate_summary(artifact_sources, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts):
+def generate_summary(config, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts):
     html = ("<html><head><title>Repository {report_name}</title>" + \
             "<link rel=\"stylesheet\" type=\"text/css\" href=\"http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css\">" + \
             "<script src=\"http://code.jquery.com/jquery-1.10.2.js\"></script>" + \
@@ -211,10 +211,10 @@ def generate_summary(artifact_sources, groupids, multiversion_gas, malformed_ver
 
     examples = ""
     i = 1
-    for artifact_source in artifact_sources:
+    for artifact_source in config.artifactSources:
         html += "<div class=\"artifact-source\">"
         if artifact_source["type"] == "dependency-graph":
-            html += "<h2>Dependency graph #%i</h2><h3>Roots</h3><ul>" % i
+            html += "<h3>Dependency graph #%i</h3><h4>Roots</h4><ul>" % i
             i += 1
             for root in sorted(artifact_source['top-level-gavs']):
                 ma = MavenArtifact.createFromGAV(root)
@@ -234,7 +234,7 @@ def generate_summary(artifact_sources, groupids, multiversion_gas, malformed_ver
                     else:
                         html += "<li class=\"error\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(
                                 gid=gid, aid=aid, ver=ver)
-            html += examples + "</ul><h3>BOMs</h3><ul>"
+            html += examples + "</ul><h4>BOMs</h4><ul>"
             if len(artifact_source['injected-boms']):
                 for bom in artifact_source['injected-boms']:
                     ma = MavenArtifact.createFromGAV(bom)
@@ -248,10 +248,41 @@ def generate_summary(artifact_sources, groupids, multiversion_gas, malformed_ver
                                 gid=gid, aid=aid, ver=ver)
             else:
                 html += "<li><em>none</em></li>"
-            html += "</ul>"
+            if len(artifact_source['excluded-subgraphs']):
+                html += "</ul><h4>Excluded subgraphs</h4><ul>"
+                for exclusion in artifact_source['excluded-subgraphs']:
+                    ma = MavenArtifact.createFromGAV(exclusion)
+                    gid = ma.groupId
+                    aid = ma.artifactId
+                    ver = ma.version
+                    if gid in groupids.keys() and aid in groupids[gid].keys() and ver in groupids[gid][aid]:
+                        html += "<li><a class=\"error\" href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(gid=gid, aid=aid, ver=ver)
+                    else:
+                        html += "<li class=\"excluded\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(
+                                gid=gid, aid=aid, ver=ver)
+            if artifact_source['preset'] in ["sob-build", "scope-with-embedded", "requires", "managed-sob-build"]:
+                contents = "runtime dependencies"
+            elif artifact_source['preset'] in ["sob", "build-env", "build-requires", "br", "managed-sob"]:
+                contents = "build-time dependencies"
+            else:
+                contents = artifact_source['preset']
+            html += "</ul><h4>Contents</h4><ul><li>%s</li></ul>" % contents
         else:
             html += artifact_source["type"]
         html += "</div>"
+    html += "<div class=\"artifact-source\"><h3>Global</h3><h4>Excluded GA(TC)V patterns</h4><ul>"
+    if len(config.excludedGAVs):
+        for excluded_pattern in config.excludedGAVs:
+            html += "<li class=\"excluded\">%s</li>" % excluded_pattern
+    else:
+        html += "<li><em>none</em></li>"
+    html += "</ul><h4>Excluded repositories</h4><ul>"
+    if len(config.excludedRepositories):
+        for excluded_repo in config.excludedRepositories:
+            html += "<li class=\"excluded\"><a href=\"%(url)s\">%(url)s</li>" % {"url": excluded_repo}
+    else:
+        html += "<li><em>none</em></li>"
+    html += "</ul></div>"
 
     html += "</div>\n<div id=\"tab-multi-versioned-artifacts\"><h2>Multi-versioned artifacts</h2><ul>"
     for groupid in sorted(multiversion_gas.keys()):
@@ -320,7 +351,8 @@ def generate_summary(artifact_sources, groupids, multiversion_gas, malformed_ver
 def generate_css(output):
     css = "body { background-color: white }\n" \
         + "a { color: blue }\n" \
-        + ".artifact-source { border: solid #222; margin: 1em 0; }\n" \
+        + ".artifact-source { border: solid 0.15em #bbb; margin: 1em 0; padding: 0.5em; }\n" \
+        + ".artifact-source h3 { margin: 0.5em 0 0; }\n" \
         + ".error, .error a { color: red }\n" \
         + ".excluded { text-decoration: line-through }\n" \
         + ".example, .example a { color: cornflowerblue }\n" \

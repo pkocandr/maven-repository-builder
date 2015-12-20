@@ -29,6 +29,7 @@
 	  "excluded-subgraphs-ref": "excluded-gavs.list",
       "wsid": "1",
       "preset": "managed-sob-build",
+      "mutator": "NOP",
       "top-level-gavs-ref": "top-level-gavs.list"
     },
     {
