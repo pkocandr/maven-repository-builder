@@ -23,12 +23,9 @@ def generate_report(output, artifact_sources, artifact_list, report_name):
     os.makedirs(os.path.join(output, "pages"))
 
     roots = []
-    boms = set()
     for artifact_source in artifact_sources:
         if artifact_source["type"] == "dependency-graph":
             roots.extend(artifact_source['top-level-gavs'])
-            boms = boms.union(artifact_source['injected-boms'])
-    boms = sorted(list(boms))
 
     groupids = dict()
     version_pattern = re.compile("^.*[.-]redhat-[^.]+$")
@@ -57,7 +54,7 @@ def generate_report(output, artifact_sources, artifact_list, report_name):
                 generate_artifact_page(ma, roots, art_spec.paths, art_spec.url, output, groupids, optional_artifacts)
             generate_artifactid_page(groupid, artifactid, versions, output)
         generate_groupid_page(groupid, artifactids, output)
-    generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts)
+    generate_summary(artifact_sources, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts)
     generate_css(output)
 
 
@@ -194,7 +191,7 @@ def generate_groupid_page(groupid, artifactids, output):
         htmlfile.write(html)
 
 
-def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts):
+def generate_summary(artifact_sources, groupids, multiversion_gas, malformed_versions, output, report_name, optional_artifacts):
     html = ("<html><head><title>Repository {report_name}</title>" + \
             "<link rel=\"stylesheet\" type=\"text/css\" href=\"http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css\">" + \
             "<script src=\"http://code.jquery.com/jquery-1.10.2.js\"></script>" + \
@@ -203,47 +200,60 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
             "<script>$(function() {script});</script></head><body>" + \
             "<div class=\"artifact\"><h1>{report_name}</h1><div id=\"tabs\">" + \
             "<ul>" + \
-            "<li><a href=\"#tab-definition\">Definition</a></li>" + \
+            "<li><a href=\"#tab-definition\">Artifact sources</a></li>" + \
             "<li><a href=\"#tab-multi-versioned-artifacts\">Multi-versioned artifacts</a></li>" + \
             "<li><a href=\"#tab-malformed-versions\">Malformed versions</a></li>" + \
             "<li><a href=\"#tab-optional-artifacts\">Optional artifacts</a></li>" + \
             "<li><a href=\"#tab-all-artifacts\">All artifacts</a></li>" + \
             "</ul>" + \
             "<div id=\"tab-definition\">" + \
-            "<h2>Repo roots</h2><ul>").format(report_name=report_name, script="{ $(\"#tabs\").tabs(); }")
+            "<h2>Artifact sources</h2>").format(report_name=report_name, script="{ $(\"#tabs\").tabs(); }")
 
     examples = ""
-    for root in sorted(roots):
-        ma = MavenArtifact.createFromGAV(root)
-        gid = ma.groupId
-        aid = ma.artifactId
-        ver = ma.version
-        if gid in groupids.keys() and aid in groupids[gid].keys() and ver in groupids[gid][aid]:
-            if ma.is_example():
-                examples += "<li class=\"error\"><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(
-                            gid=gid, aid=aid, ver=ver)
+    i = 1
+    for artifact_source in artifact_sources:
+        html += "<div class=\"artifact-source\">"
+        if artifact_source["type"] == "dependency-graph":
+            html += "<h2>Dependency graph #%i</h2><h3>Roots</h3><ul>" % i
+            i += 1
+            for root in sorted(artifact_source['top-level-gavs']):
+                ma = MavenArtifact.createFromGAV(root)
+                gid = ma.groupId
+                aid = ma.artifactId
+                ver = ma.version
+                if gid in groupids.keys() and aid in groupids[gid].keys() and ver in groupids[gid][aid]:
+                    if ma.is_example():
+                        examples += "<li class=\"error\"><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(
+                                    gid=gid, aid=aid, ver=ver)
+                    else:
+                        html += "<li><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(
+                                gid=gid, aid=aid, ver=ver)
+                else:
+                    if ma.is_example():
+                        examples += "<li class=\"example\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(gid=gid, aid=aid, ver=ver)
+                    else:
+                        html += "<li class=\"error\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(
+                                gid=gid, aid=aid, ver=ver)
+            html += examples + "</ul><h3>BOMs</h3><ul>"
+            if len(artifact_source['injected-boms']):
+                for bom in artifact_source['injected-boms']:
+                    ma = MavenArtifact.createFromGAV(bom)
+                    gid = ma.groupId
+                    aid = ma.artifactId
+                    ver = ma.version
+                    if gid in groupids.keys() and aid in groupids[gid].keys() and ver in groupids[gid][aid]:
+                        html += "<li><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(gid=gid, aid=aid, ver=ver)
+                    else:
+                        html += "<li><span class=\"error\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</span></li>".format(
+                                gid=gid, aid=aid, ver=ver)
             else:
-                html += "<li><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(
-                        gid=gid, aid=aid, ver=ver)
+                html += "<li><em>none</em></li>"
+            html += "</ul>"
         else:
-            if ma.is_example():
-                examples += "<li class=\"example\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(gid=gid, aid=aid, ver=ver)
-            else:
-                html += "<li class=\"error\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(
-                        gid=gid, aid=aid, ver=ver)
-    html += examples + "</ul><h2>BOMs</h2><ul>"
-    for bom in sorted(boms):
-        ma = MavenArtifact.createFromGAV(bom)
-        gid = ma.groupId
-        aid = ma.artifactId
-        ver = ma.version
-        if gid in groupids.keys() and aid in groupids[gid].keys() and ver in groupids[gid][aid]:
-            html += "<li><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(gid=gid, aid=aid, ver=ver)
-        else:
-            html += "<li><span class=\"error\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</span></li>".format(
-                    gid=gid, aid=aid, ver=ver)
+            html += artifact_source["type"]
+        html += "</div>"
 
-    html += "</ul></div>\n<div id=\"tab-multi-versioned-artifacts\"><h2>Multi-versioned artifacts</h2><ul>"
+    html += "</div>\n<div id=\"tab-multi-versioned-artifacts\"><h2>Multi-versioned artifacts</h2><ul>"
     for groupid in sorted(multiversion_gas.keys()):
         artifactids = multiversion_gas[groupid]
         for artifactid in sorted(artifactids.keys()):
@@ -310,6 +320,7 @@ def generate_summary(roots, boms, groupids, multiversion_gas, malformed_versions
 def generate_css(output):
     css = "body { background-color: white }\n" \
         + "a { color: blue }\n" \
+        + ".artifact-source { border: solid #222; margin: 1em 0; }\n" \
         + ".error, .error a { color: red }\n" \
         + ".excluded { text-decoration: line-through }\n" \
         + ".example, .example a { color: cornflowerblue }\n" \
