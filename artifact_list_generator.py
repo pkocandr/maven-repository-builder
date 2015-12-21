@@ -135,7 +135,10 @@ def _generateArtifactList(options, args):
 
     if options.reportdir:
         logging.info("Generating repository analysis report")
-        reporter.generate_report(options.reportdir, config.artifactSources, artifactList, options.reportname)
+        if hasattr(options, "reportname"):
+            reporter.generate_report(options.reportdir, config, artifactList, options.reportname)
+        else:
+            reporter.generate_report(options.reportdir, config, artifactList, None)
         logging.info("Report has been generated")
 
     return artifactList
