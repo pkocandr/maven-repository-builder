@@ -42,9 +42,12 @@ help ()
     echo '                        Name of a file containing GATCV patterns allowing usage of stars'
     echo '                        or regular expressions when enclosed in "r/pattern/". It can force'
     echo '                        inclusion of artifacts with excluded types.'
-    echo '  -R REPORT_DIR'
+    echo '  -O REPORT_DIR'
     echo '                        Dir where to generate the repository analysis report. If not specified'
-    echo '                        no report will be generated.'
+    echo '                        no report will be generated. By default "maven-repository-report" will '
+    echo '                        be used.'
+    echo '  -R REPORT_FILENAME'
+    echo '                        Zip the created repository report in a file with provided name'
     echo '  -m'
     echo '                        Generate metadata in the created repository'
     echo '  -l LOGLEVEL'
@@ -76,11 +79,12 @@ HELP=false
 METADATA=false
 OUTPUT_DIR="local-maven-repository"
 OUTPUT_REPO="maven-repository"
+REPORT_DIR="maven-repository-report"
 
 # =======================================
 # ====== reading command arguments ======
 # =======================================
-while getopts hc:u:r:a:o:b:l:L:s:x:w:R:md: OPTION
+while getopts hc:u:r:a:o:b:l:L:s:x:w:O:R:md: OPTION
 do
     case "${OPTION}" in
         h) HELP=true;;
@@ -93,7 +97,8 @@ do
         w) GATCV_WHITELIST=${OPTARG};;
         o) OUTPUT_DIR=${OPTARG};;
         b) OUTPUT_REPO=${OPTARG};;
-        R) REPORT_DIR=${OPTARG};;
+        O) REPORT_DIR=${OPTARG};;
+        R) REPORT_FILE=${OPTARG};;
         m) METADATA=true;;
         l) LOGLEVEL=${OPTARG};;
         L) LOGFILE=${OPTARG};;
@@ -127,7 +132,7 @@ isvarset OUTPUT_REPO_DIR && MRB_PARAMS+=("-o") && MRB_PARAMS+=("${OUTPUT_REPO_DI
 isvarset CHECKSUM_MODE && MRB_PARAMS+=("-s") && MRB_PARAMS+=("${CHECKSUM_MODE}")
 isvarset EXCLUDED_TYPES && MRB_PARAMS+=("-x") && MRB_PARAMS+=("${EXCLUDED_TYPES}")
 isvarset GATCV_WHITELIST && MRB_PARAMS+=("-w") && MRB_PARAMS+=("${GATCV_WHITELIST}")
-isvarset REPORT_DIR && MRB_PARAMS+=("-R") && MRB_PARAMS+=("${REPORT_DIR}")
+isvarset REPORT_DIR && MRB_PARAMS+=("-O") && MRB_PARAMS+=("${REPORT_DIR}")
 isvarset LOGLEVEL && MRB_PARAMS+=("-l") && MRB_PARAMS+=("${LOGLEVEL}")
 isvarset LOGFILE && MRB_PARAMS+=("-L") && MRB_PARAMS+=("${LOGFILE}")
 
@@ -135,7 +140,7 @@ isvarset LOGFILE && MRB_PARAMS+=("-L") && MRB_PARAMS+=("${LOGFILE}")
 if [ $# -gt 0 ]; then
     while [ $# -gt 0 ] && [ ${1:0:1} = '-' ]; do
         L=${1:1:2}
-        if [ $L = 'c' ] || [ $L = 'r' ] || [ $L = 'a' ] || [ $L = 'o' ] || [ $L = 'b' ] || [ $L = 'u' ] || [ $L = 's' ] || [ $L = 'x' ] || [ $L = 'w' ] || [ $L = 'R' ] || [ $L = 'l' ] || [ $L = 'L' ] || [ $L = 'd' ] ; then
+        if [ $L = 'c' ] || [ $L = 'r' ] || [ $L = 'a' ] || [ $L = 'o' ] || [ $L = 'b' ] || [ $L = 'u' ] || [ $L = 's' ] || [ $L = 'x' ] || [ $L = 'w' ] || [ $L = 'O' ] || [ $L = 'R' ] || [ $L = 'l' ] || [ $L = 'L' ] || [ $L = 'd' ] ; then
             shift
         fi
         shift
@@ -170,5 +175,16 @@ if [ ! -z ${REPO_FILE} ]; then
     ABS_REPO_FILE=$(cd "${REPO_FILE_DIR}" && pwd -P)/$(basename ${REPO_FILE})
     cd `dirname ${OUTPUT_DIR}`
     zip -qr ${ABS_REPO_FILE} $(basename ${OUTPUT_DIR})
+    cd $WORKDIR
+fi
+if [ ! -z ${REPORT_FILE} ]; then
+    REPORT_FILE_DIR=$(dirname ${REPORT_FILE})
+    if [ -d "${REPORT_FILE_DIR}" ]; then
+        rm -rf ${REPORT_FILE_DIR}
+    fi
+    mkdir -p "${REPORT_FILE_DIR}"
+    ABS_REPORT_FILE=$(cd "${REPORT_FILE_DIR}" && pwd -P)/$(basename ${REPORT_FILE})
+    cd `dirname ${REPORT_DIR}`
+    zip -qr ${ABS_REPORT_FILE} $(basename ${REPORT_DIR})
     cd $WORKDIR
 fi
