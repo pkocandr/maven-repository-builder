@@ -93,7 +93,7 @@ def main():
              'in "r/pattern/". It can force inclusion of artifacts with excluded types.'
     )
     cliOptParser.add_option(
-        "-R", '--reportdir',
+        "-O", '--reportdir',
         dest="reportdir",
         default=None,
         help='Dir where to generate the repository analysis report. If not specified no report will be generated.'
