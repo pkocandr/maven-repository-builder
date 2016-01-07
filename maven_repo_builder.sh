@@ -79,7 +79,6 @@ HELP=false
 METADATA=false
 OUTPUT_DIR="local-maven-repository"
 OUTPUT_REPO="maven-repository"
-REPORT_DIR="maven-repository-report"
 
 # =======================================
 # ====== reading command arguments ======
@@ -111,6 +110,13 @@ if [ -z $OUTPUT_REPO ]; then
 else
     OUTPUT_REPO_DIR=$OUTPUT_DIR/$OUTPUT_REPO
 fi
+
+if [ -z $REPORT_DIR ]; then
+	if [ ! -z $REPORT_FILE ]; then
+		REPORT_DIR="maven-repository-report"
+	fi
+fi
+
 
 if ${HELP}; then
     help $0
