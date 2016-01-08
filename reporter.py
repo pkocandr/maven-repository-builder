@@ -317,9 +317,9 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
         if optional_artifacts[ma]:
             gav = "%s&nbsp;:&nbsp;%s&nbsp;:&nbsp;%s" % (ma.groupId, ma.artifactId, ma.version)
             gav_filename = "%s$%s$%s" % (ma.groupId, ma.artifactId, ma.version)
-            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>&nbsp;:&nbsp;" + \
-                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a> : " + \
-                     "<a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>").format(groupid=ma.groupId,
+            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\" class=\"optional\">{groupid}</a>&nbsp;:&nbsp;" + \
+                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\" class=\"optional\">{artifactid}</a> : " + \
+                     "<a href=\"pages/artifact_version_{gav_filename}.html\" class=\"optional\">{version}</a></li>").format(groupid=ma.groupId,
                                                                                                          artifactid=ma.artifactId,
                                                                                                          version=ma.version,
                                                                                                          gav_filename=gav_filename)
@@ -327,9 +327,9 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
     for ma in sorted(optional_artifacts.keys()):
         if not optional_artifacts[ma]:
             gav_filename = "%s$%s$%s" % (ma.groupId, ma.artifactId, ma.version)
-            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a> : " + \
-                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a> : " + \
-                     "<a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>").format(groupid=ma.groupId,
+            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\" class=\"optional\">{groupid}</a> : " + \
+                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\" class=\"optional\">{artifactid}</a> : " + \
+                     "<a href=\"pages/artifact_version_{gav_filename}.html\" class=\"optional\">{version}</a></li>").format(groupid=ma.groupId,
                                                                                                          artifactid=ma.artifactId,
                                                                                                          version=ma.version,
                                                                                                          gav_filename=gav_filename)
@@ -356,7 +356,7 @@ def generate_css(output):
         + ".error, .error a { color: red }\n" \
         + ".excluded { text-decoration: line-through }\n" \
         + ".example, .example a { color: cornflowerblue }\n" \
-        + ".optional, a.optional { color: grey }\n" \
+        + ".optional, a.optional { color: #6c8 }\n" \
         + ".relation { color: grey; font-size: 0.8em }\n" \
         + "#paths li { padding-bottom: 1em }\n" \
         + "#pom iframe {width: 100%; height: 60em;}"
