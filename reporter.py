@@ -356,7 +356,7 @@ def generate_css(output):
         + ".error, .error a { color: red }\n" \
         + ".excluded { text-decoration: line-through }\n" \
         + ".example, .example a { color: cornflowerblue }\n" \
-        + ".optional, a.optional { color: grey }\n" \
+        + ".optional, a.optional { color: #6c8 }\n" \
         + ".relation { color: grey; font-size: 0.8em }\n" \
         + "#paths li { padding-bottom: 1em }\n" \
         + "#pom iframe {width: 100%; height: 60em;}"
