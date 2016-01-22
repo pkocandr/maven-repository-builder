@@ -168,25 +168,27 @@ For an example config with full config structure see [Sample Config](https://git
             *   **include-scope** - speicifes scope to use as includeScope parameter when running mvn. For more informations
                 on available values see https://maven.apache.org/plugins/maven-dependency-plugin/list-mojo.html#includeScope
                 Default value is specified by maven-dependency-plugin.
-        *   "dependency-graph" - a merged lists of maven dependency graph of selected GAVs provided by AProx. Additional
+        *   "dependency-graph" - a merged lists of maven dependency graph of selected GAVs provided by Indy. Additional
             artifact source config fields for this type are
-            *   **aprox-url** - AProx instance URL (without the API part)
-                (e.g. "http://aprox-dev.app.eng.bos.redhat.com:8080/aprox/").
+            *   **indy-url** - Indy instance URL (without the API part)
+                (e.g. "http://dev208.mw.lab.eng.bos.redhat.com:8080/").
             *   **top-level-gavs-ref** - reference to a file with the list of top level GAVs, every GAV should be on
                 separate line.
-            *   **source-key** - AProx source key in form of <type>:<name>, e.g. "repository:central".
-            *   **wsid** - AProx workspace ID. The field is not required. If ommited, a new workspace will be created
+            *   **source-key** - Indy source key in form of <type>:<name>, e.g. "repository:central".
+            *   **wsid** - Indy workspace ID. The field is not required. If ommited, a new workspace will be created
                 and deleted after all work finished.
-            *   **preset** - AProx preset. The field is not required.
-            *   **preset-params** - Dictionary of AProx preset params. The field is not required.
+            *   **preset** - Indy preset. This specifies the artifact filter to be used inside Indy. The field is not required.
+            *   **preset-params** - Dictionary of Indy preset params. The field is not required.
+            *   **mutator** - Indy mutator. This can tell Indy to use or ignore the root artifacts' dependency management.
+                The field is not required.
             *   **injected-boms** - list of injected BOMs' GAVs when using dependency management injection Maven extension
-            *   **excluded-sources** - list of AProx source keys to be excluded directly in the result of depgrapher.
+            *   **excluded-sources** - list of Indy source keys to be excluded directly in the result of depgrapher.
                 The field is not required.
             *   **excluded-subgraphs** - list of GAVs to be excluded along with their subgraphs. The field is not required.
             *   **excluded-subgraphs-ref** - reference to a file with the list of GAVs to be excluded along with their
 			    subgraphs. You can use it along with the **excluded-subgraphs** and the values will be merged. The field is
 				not required.
-            *   **patcher-ids** - list of patcher ID strings for AProx.
+            *   **patcher-ids** - list of patcher ID strings for Indy.
         *   "repository" - a local or remote repository to crawl and include found artifacts. Additional artifact
             source config fields for this type are
             *   **repo-url** -one repository URL or a list of them, which should be crawled

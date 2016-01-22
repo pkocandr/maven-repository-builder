@@ -3,7 +3,7 @@ import os
 import re
 import logging
 import traceback
-from aprox_apis import AproxApi
+from indy_apis import IndyApi
 import multiprocessing.pool
 from multiprocessing.pool import ThreadPool
 from multiprocessing import Lock
@@ -147,7 +147,7 @@ class ArtifactListBuilder:
                                                    source['skip-missing'])
             elif source['type'] == 'dependency-graph':
                 logging.info("Building artifact list from dependency graph of top level GAVs")
-                artifacts = self._listDependencyGraph(source['aprox-url'],
+                artifacts = self._listDependencyGraph(source['indy-url'],
                                                       source['wsid'],
                                                       source['source-key'],
                                                       self._parseDepList(source['top-level-gavs']),
@@ -388,27 +388,27 @@ class ArtifactListBuilder:
 
         return artifacts
 
-    def _listDependencyGraph(self, aproxUrl, wsid, sourceKey, gavs, excludedSources=[], excludedSubgraphs=[],
+    def _listDependencyGraph(self, indyUrl, wsid, sourceKey, gavs, excludedSources=[], excludedSubgraphs=[],
                              preset="requires", mutator=None, patcherIds=[], injectedBOMs=[], analyze=False):
         """
         Loads maven artifacts from dependency graph.
 
-        :param aproxUrl: URL of the AProx instance
+        :param indyUrl: URL of the Indy instance
         :param wsid: workspace ID
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param gavs: List of top level GAVs
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
         :param mutator: mutator used for dependency graph mutation
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
         :returns: Dictionary where index is MavenArtifact object and value is
                   ArtifactSpec with its repo root URL
         """
-        aprox = AproxApi(aproxUrl)
+        indy = IndyApi(indyUrl)
 
         if not preset:
             preset = "requires"  # only runtime dependencies
@@ -420,11 +420,11 @@ class ArtifactListBuilder:
 
         # Resolve graph MANIFEST for GAVs
         if self.configuration.useCache:
-            urlmap = aprox.urlmap(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
-                                  excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
+            urlmap = indy.urlmap(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
+                                 excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
         else:
-            urlmap = aprox.urlmap_nocache(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
-                                          excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
+            urlmap = indy.urlmap_nocache(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
+                                         excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
 
         # parse returned map
         artifacts = {}
@@ -450,11 +450,11 @@ class ArtifactListBuilder:
                 if not ga in gas:
                     gas.append(ga)
             if self.configuration.useCache:
-                path_dict = aprox.paths(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs, preset,
-                                        mutator, patcherIds, injectedBOMs, False)
+                path_dict = indy.paths(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs, preset,
+                                       mutator, patcherIds, injectedBOMs, False)
             else:
-                path_dict = aprox.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
-                                                preset, mutator, patcherIds, injectedBOMs, False)
+                path_dict = indy.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
+                                               preset, mutator, patcherIds, injectedBOMs, False)
             if "projects" in path_dict:
                 path_dict = path_dict["projects"]
             if path_dict:
@@ -498,7 +498,7 @@ class ArtifactListBuilder:
 
             if not wsid:
                 try:
-                    aprox.deleteWorkspace(_wsid)
+                    indy.deleteWorkspace(_wsid)
                 except Exception as err:
                     logging.warning("Workspace deletion failed: %s" % str(err))
 
