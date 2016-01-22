@@ -126,9 +126,14 @@ class Configuration:
         else:
             for source in self.artifactSources:
                 if source['type'] == 'dependency-graph':
-                    if 'aprox-url' not in source:
-                        logging.error("No aprox-url specified for source with type dependency-graph.")
-                        valid = False
+                    if 'indy-url' not in source:
+						if 'aprox-url' in source:
+							source['indy-url'] = source['aprox-url']
+							del source['aprox-url']
+							logging.warn("aprox-url source parameter is deprecated, please use indy-url.")
+						else:
+							logging.error("No indy-url specified for source with type dependency-graph.")
+							valid = False
                     if 'source-key' not in source:
                         logging.error("No source-key specified for source with type dependency-graph.")
                         valid = False

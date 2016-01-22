@@ -11,7 +11,7 @@ import copy
 import artifact_list_builder
 import configuration
 import maven_repo_util
-from aprox_apis import AproxApi
+from indy_apis import IndyApi
 from artifact_list_builder import ArtifactListBuilder, ArtifactSpec, ArtifactType
 from maven_repo_util import ChecksumMode
 from maven_artifact import MavenArtifact
@@ -21,7 +21,7 @@ from filter import Filter
 
 class Tests(unittest.TestCase):
 
-    aproxUrl = 'http://dev208.mw.lab.eng.bos.redhat.com:8080/'
+    indyUrl = 'http://dev208.mw.lab.eng.bos.redhat.com:8080/'
 
     artifactList = {
       "com.google.guava:guava": {
@@ -435,10 +435,10 @@ class Tests(unittest.TestCase):
             'xml-resolver:xml-resolver:pom:1.2': set(['']),
             'xml-resolver:xml-resolver:jar:1.2': set(['', 'sources'])
         }
-        expectedArtifacts = self._getExpectedArtifacts(self.aproxUrl, dependencies)
+        expectedArtifacts = self._getExpectedArtifacts(self.indyUrl, dependencies)
 
         builder = artifact_list_builder.ArtifactListBuilder(config)
-        actualArtifacts = builder._listDependencyGraph(self.aproxUrl, None, sourceKey, topGavs)
+        actualArtifacts = builder._listDependencyGraph(self.indyUrl, None, sourceKey, topGavs)
 
         self.assertEqualArtifactList(expectedArtifacts, actualArtifacts)
 
@@ -464,10 +464,10 @@ class Tests(unittest.TestCase):
             'xml-resolver:xml-resolver:pom:1.2': set(['']),
             'xml-resolver:xml-resolver:jar:1.2': set(['', 'sources'])
         }
-        expectedArtifacts = self._getExpectedArtifacts(self.aproxUrl, dependencies)
+        expectedArtifacts = self._getExpectedArtifacts(self.indyUrl, dependencies)
 
         builder = artifact_list_builder.ArtifactListBuilder(config)
-        actualArtifacts = builder._listDependencyGraph(self.aproxUrl, None, sourceKey, topGavs)
+        actualArtifacts = builder._listDependencyGraph(self.indyUrl, None, sourceKey, topGavs)
 
         self.assertEqualArtifactList(expectedArtifacts, actualArtifacts)
 
@@ -493,20 +493,20 @@ class Tests(unittest.TestCase):
             'xml-resolver:xml-resolver:pom:1.2': set(['']),
             'xml-resolver:xml-resolver:jar:1.2': set([''])
         }
-        expectedArtifacts = self._getExpectedArtifacts(self.aproxUrl, dependencies)
+        expectedArtifacts = self._getExpectedArtifacts(self.indyUrl, dependencies)
 
         builder = artifact_list_builder.ArtifactListBuilder(config)
-        actualArtifacts = builder._listDependencyGraph(self.aproxUrl, None, sourceKey, topGavs)
+        actualArtifacts = builder._listDependencyGraph(self.indyUrl, None, sourceKey, topGavs)
 
         self.assertEqualArtifactList(expectedArtifacts, actualArtifacts)
 
-    def test_aproxCreateDeleteWorkspace(self):
-        aproxApi = AproxApi(self.aproxUrl)
+    def test_indyCreateDeleteWorkspace(self):
+        indyApi = IndyApi(self.indyUrl)
 
-        ws = aproxApi.createWorkspace()
+        ws = indyApi.createWorkspace()
         wsid = ws["id"]
 
-        delResult = aproxApi.deleteWorkspace(wsid)
+        delResult = indyApi.deleteWorkspace(wsid)
 
         self.assertTrue(delResult)
 
