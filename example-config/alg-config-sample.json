@@ -20,7 +20,7 @@
     },
     {
       "type": "dependency-graph",
-      "aprox-url": "http://aprox-dev.app.eng.bos.redhat.com:8080/aprox/",
+      "indy-url": "http://indy-dev.app.eng.bos.redhat.com:8080/",
       "source-key": "group:central+eap6+soa-brms-6-build",
       "excluded-sources": [
         "group:central+eap6"

@@ -75,16 +75,16 @@ class UrlRequester:
         return response.status
 
 
-class AproxApi(UrlRequester):
+class IndyApi(UrlRequester):
     """
-    Class allowing to communicate with the AProx REST API.
+    Class allowing to communicate with the Indy REST API.
     """
 
     API_PATH = "api/"
     CACHE_PATH = "cache"
 
-    def __init__(self, aprox_url):
-        self._aprox_url = slashAtTheEnd(aprox_url)
+    def __init__(self, indy_url):
+        self._indy_url = slashAtTheEnd(indy_url)
 
     def deleteWorkspace(self, wsid):
         """
@@ -94,14 +94,14 @@ class AproxApi(UrlRequester):
         :returns: True if the workspace was deleted, False otherwise
         """
         strWsid = str(wsid)
-        url = (self._aprox_url + self.API_PATH + "depgraph/ws/%s") % strWsid
-        logging.info("Deleting AProx workspace with ID %s", strWsid)
+        url = (self._indy_url + self.API_PATH + "depgraph/ws/%s") % strWsid
+        logging.info("Deleting Indy workspace with ID %s", strWsid)
         status = self._deleteUrl(url)
         if status / 10 == 20: # any 20x status code
-            logging.info("AProx workspace with ID %s was deleted", strWsid)
+            logging.info("Indy workspace with ID %s was deleted", strWsid)
             return True
         else:
-            logging.warning("An error occurred while deleting AProx workspace with ID %s, status code %i.",
+            logging.warning("An error occurred while deleting Indy workspace with ID %s, status code %i.",
                             strWsid, status)
             return False
 
@@ -113,7 +113,7 @@ class AproxApi(UrlRequester):
         cached = self.get_cached_urlmap(sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
                                         mutator, patcherIds, injectedBOMs, resolve)
         if cached:
-            logging.info("Using cached version of AProx urlmap for roots %s", "-".join(gavs))
+            logging.info("Using cached version of Indy urlmap for roots %s", "-".join(gavs))
             return json.loads(cached)
         else:
             deleteWS = False
@@ -138,7 +138,7 @@ class AproxApi(UrlRequester):
     def urlmap_nocache(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
                        mutator, patcherIds, injectedBOMs, resolve=True):
         """
-        Requests creation of the urlmap. It creates the configfile, posts it to AProx server
+        Requests creation of the urlmap. It creates the configfile, posts it to Indy server
         and process the result, which has following structure:
             {
                 "projects": {
@@ -168,8 +168,8 @@ class AproxApi(UrlRequester):
                 }
             }
 
-        :param wsid: AProx workspace ID
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param wsid: Indy workspace ID
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param gavs: list of GAV as strings
         :param addclassifiers: list of dictionaries with structure {"type": "<type>", "classifier": "<classifier>"}, any
@@ -177,10 +177,10 @@ class AproxApi(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
-        :param resolve: flag to tell AProx to run resolve for given roots
+        :param resolve: flag to tell Indy to run resolve for given roots
         :param analyze: flag that informs the API not to delete workspace, because analysis will be performed
         :returns: the requested urlmap
         """
@@ -203,7 +203,7 @@ class AproxApi(UrlRequester):
     def urlmap_response(self, wsid, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
                         mutator, patcherIds, injectedBOMs, resolve=True):
         """
-        Requests creation of the urlmap. It creates the configfile, posts it to AProx server
+        Requests creation of the urlmap. It creates the configfile, posts it to Indy server
         and process the result, which has following structure:
             {
                 "projects": {
@@ -233,8 +233,8 @@ class AproxApi(UrlRequester):
                 }
             }
 
-        :param wsid: AProx workspace ID
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param wsid: Indy workspace ID
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param gavs: list of GAV as strings
         :param addclassifiers: list of dictionaries with structure {"type": "<type>", "classifier": "<classifier>"}, any
@@ -242,13 +242,13 @@ class AproxApi(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
-        :param resolve: flag to tell AProx to run resolve for given roots
+        :param resolve: flag to tell Indy to run resolve for given roots
         :returns: the response string of the requested urlmap
         """
-        url = self._aprox_url + self.API_PATH + "depgraph/repo/urlmap"
+        url = self._indy_url + self.API_PATH + "depgraph/repo/urlmap"
 
         request = {}
         if addclassifiers:
@@ -281,10 +281,10 @@ class AproxApi(UrlRequester):
 
         if response.status == 200:
             responseContent = response.read()
-            logging.debug("AProx urlmap created. Response content:\n%s", responseContent)
+            logging.debug("Indy urlmap created. Response content:\n%s", responseContent)
             return responseContent
         else:
-            logging.warning("An error occurred while creating AProx urlmap, status code %i, content '%s'.",
+            logging.warning("An error occurred while creating Indy urlmap, status code %i, content '%s'.",
                             response.status, response.read())
             return "{}"
 
@@ -296,7 +296,7 @@ class AproxApi(UrlRequester):
         cached = self.get_cached_paths(sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
                                        mutator, patcherIds, injectedBOMs, resolve)
         if cached:
-            logging.info("Using cached version of AProx paths for roots %s and targets %s", "-".join(roots),
+            logging.info("Using cached version of Indy paths for roots %s and targets %s", "-".join(roots),
                          "-".join(targets))
             return json.loads(cached)
         else:
@@ -343,7 +343,7 @@ class AproxApi(UrlRequester):
     def paths_response(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, mutator,
                        patcherIds, injectedBOMs, resolve=True):
         """
-        Requests creation of the paths from roots to targets. It creates the configfile, posts it to AProx server
+        Requests creation of the paths from roots to targets. It creates the configfile, posts it to Indy server
         and process the result, which has following structure:
             {
               "projects": {
@@ -417,21 +417,21 @@ class AproxApi(UrlRequester):
               }
             }
 
-        :param wsid: AProx workspace ID
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param wsid: Indy workspace ID
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param roots: list of root GAVs as strings
         :param targets: list of target GAVs as strings
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
-        :param resolve: flag to tell AProx to run resolve for given roots
+        :param resolve: flag to tell Indy to run resolve for given roots
         :returns: the response string of the requested paths
         """
-        url = self._aprox_url + self.API_PATH + "depgraph/repo/paths"
+        url = self._indy_url + self.API_PATH + "depgraph/repo/paths"
 
         request = {}
         request["workspaceId"] = wsid
@@ -459,15 +459,15 @@ class AproxApi(UrlRequester):
         response = self._postUrl(url, data=data, headers=headers)
 
         if response.status == 404:
-            url = self._aprox_url + self.API_PATH + "depgraph/graph/paths"
+            url = self._indy_url + self.API_PATH + "depgraph/graph/paths"
             response = self._postUrl(url, data=data, headers=headers)
 
         if response.status == 200:
             responseContent = response.read()
-            logging.debug("AProx paths created. Response content:\n%s", responseContent)
+            logging.debug("Indy paths created. Response content:\n%s", responseContent)
             return responseContent
         else:
-            logging.warning("An error occurred while creating AProx paths, status code %i, content '%s'.",
+            logging.warning("An error occurred while creating Indy paths, status code %i, content '%s'.",
                             response.status, response.read())
             return "{}"
 
@@ -476,7 +476,7 @@ class AproxApi(UrlRequester):
         """
         Gets cache urlmap response if exists for given parameters.
 
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param gavs: list of GAV as strings
         :param addclassifiers: list of dictionaries with structure {"type": "<type>", "classifier": "<classifier>"}, any
@@ -484,10 +484,10 @@ class AproxApi(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
-        :param resolve: flag to tell AProx to run resolve for given roots
+        :param resolve: flag to tell Indy to run resolve for given roots
         :returns: the cached response or None if no cached response exists
         """
         cache_filename = self.get_urlmap_cache_filename(sourceKey, gavs, addclassifiers, excludedSources,
@@ -506,7 +506,7 @@ class AproxApi(UrlRequester):
         Stores urlmap response to cache.
 
         :param response: the response to store
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param gavs: list of GAV as strings
         :param addclassifiers: list of dictionaries with structure {"type": "<type>", "classifier": "<classifier>"}, any
@@ -514,10 +514,10 @@ class AproxApi(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
-        :param resolve: flag to tell AProx to run resolve for given roots
+        :param resolve: flag to tell Indy to run resolve for given roots
         """
         cache_filename = self.get_urlmap_cache_filename(sourceKey, gavs, addclassifiers, excludedSources,
                                                         excludedSubgraphs, preset, mutator, patcherIds,
@@ -532,7 +532,7 @@ class AproxApi(UrlRequester):
         """
         Creates a cache filename to use for urlmap request.
 
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param gavs: list of GAV as strings
         :param addclassifiers: list of dictionaries with structure {"type": "<type>", "classifier": "<classifier>"}, any
@@ -540,7 +540,7 @@ class AproxApi(UrlRequester):
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
         """
@@ -561,17 +561,17 @@ class AproxApi(UrlRequester):
         """
         Gets cache paths response if exists for given parameters.
 
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param roots: list of GAV as strings
         :param targets: list of GA as strings
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
-        :param resolve: flag to tell AProx to run resolve for given roots
+        :param resolve: flag to tell Indy to run resolve for given roots
         :returns: the cached response or None if no cached response exists
         """
         cache_filename = self.get_paths_cache_filename(sourceKey, roots, targets, excludedSources, excludedSubgraphs,
@@ -589,17 +589,17 @@ class AproxApi(UrlRequester):
         Stores paths response to cache.
 
         :param response: the response to store
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param roots: list of GAV as strings
         :param targets: list of GA as strings
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
-        :param resolve: flag to tell AProx to run resolve for given roots
+        :param resolve: flag to tell Indy to run resolve for given roots
         """
         cache_filename = self.get_paths_cache_filename(sourceKey, roots, targets, excludedSources, excludedSubgraphs,
                                                        preset, mutator, patcherIds, injectedBOMs)
@@ -614,14 +614,14 @@ class AproxApi(UrlRequester):
         """
         Creates a cache filename to use for paths request.
 
-        :param sourceKey: the AProx artifact source key, consisting of the source type and
+        :param sourceKey: the Indy artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param roots: list of GAV as strings
         :param targets: list of GA as strings
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
-        :param patcherIds: list of patcher ID strings for AProx
+        :param patcherIds: list of patcher ID strings for Indy
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
         """
