@@ -305,12 +305,8 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
             artifacts = artifactids[artifactid]
             for version in sorted(artifacts.keys()):
                 gav = "%s:%s:%s" % (groupid, artifactid, version)
-                html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>&nbsp;:&nbsp;" + \
-                         "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>&nbsp;:&nbsp;" + \
-                         "<a href=\"pages/artifact_version_{gav_filename}.html\">{gav}</a></li>").format(groupid=ma.groupId,
-                                                                                                         artifactid=ma.artifactId,
-                                                                                                         gav=gav,
-                                                                                                         gav_filename=gav.replace(":", "$"))
+                html += ("<li><a href=\"pages/artifact_version_{gav_filename}.html\">{gav}</a></li>").format(gav=gav,
+                                                                                                             gav_filename=gav.replace(":", "$"))
 
     html += "</ul></div>\n<div id=\"tab-optional-artifacts\"><h2>Optional artifacts</h2><h3>Direct optionals</h3><ul>"
     for ma in sorted(optional_artifacts.keys()):
