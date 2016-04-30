@@ -469,24 +469,35 @@ class ArtifactListBuilder:
                             if type(gav_paths) is dict:
                                 gav_paths = gav_paths["paths"]
                             for gav_path in gav_paths:
+                                direct = True
                                 if type(gav_path) is dict:
                                     gav_path = gav_path["pathParts"]
                                 rel_path = []
                                 for gav_rel in gav_path:
+                                    if "inherited" in gav_rel and gav_rel["inherited"]:
+                                        direct = False
+                                        break
                                     declaring = MavenArtifact.createFromGAV(gav_rel["declaring"])
                                     target = MavenArtifact.createFromGAV(maven_repo_util.gatvc_to_gatcv(gav_rel["target"]))
                                     rel_type = gav_rel["type"] if "type" in gav_rel else gav_rel["rel"]
                                     if rel_type == "DEPENDENCY":
-                                        optional_suffix = " optional" if "optional" in gav_rel and gav_rel["optional"] else ""
-                                        rel = ArtifactRelationship(declaring, target, rel_type,
-                                                                   "%s%s" % (gav_rel["scope"], optional_suffix))
+                                        extra = gav_rel["scope"]
+                                        if "optional" in gav_rel and gav_rel["optional"]:
+                                            extra = "%s %s" % (extra, "optional")
+                                        rel = ArtifactRelationship(declaring, target, rel_type, extra)
                                     elif rel_type == "PLUGIN_DEP":
                                         rel = ArtifactRelationship(declaring, target, rel_type, gav_rel["plugin"])
+                                    elif rel_type == "BOM":
+                                        if "mixin" in gav_rel and gav_rel["mixin"]:
+                                            direct = False
+                                            break
+                                        rel = ArtifactRelationship(declaring, target, rel_type)
                                     else:
                                         rel = ArtifactRelationship(declaring, target, rel_type)
                                     rel_path.append(rel)
 
-                                artifacts[ma].add_path(rel_path)
+                                if direct:
+                                    artifacts[ma].add_path(rel_path)
             for ma in artifacts.keys():
                 if not artifacts[ma].paths and ma.getGAV() not in gavs:
                     # create artificial unknown paths from all roots to current artifact
@@ -999,7 +1010,7 @@ class ArtifactRelationship():
         """
         :param declaring: the declaring artifact
         :param target: the target artifact
-        :param rel: the relationship type, available values are "PARENT", "DEPENDENCY", "BOM"
+        :param rel_type: the relationship type, available values are "PARENT", "DEPENDENCY", "BOM"
         :param extra: extra info for different relationship types, i.e. scope for dependencies, plugin for plugin deps
         """
         self.declaring = declaring
