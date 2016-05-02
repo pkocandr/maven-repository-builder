@@ -87,7 +87,7 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
         li = "<li>"
         is_inherited_or_mixin = False
         for rel in path:
-            if hasattr(rel, "inherited") and rel.inherited or hasattr(rel, "mixin") and rel.mixin:
+            if "inherited" in rel.extra or "mixin" in rel.extra:
                 is_inherited_or_mixin = True
                 break
             dec = rel.declaring
@@ -114,7 +114,7 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
                         else:
                             li += "embeds"
                     else:
-                        li += "depends on (scope %s)" % rel.extra
+                        li += "depends on (scope %s)" % rel.extra.split(' ', 2)[0]
                     if "optional" in rel.extra:
                         optional_path = True
                 elif rel_type == "PARENT":

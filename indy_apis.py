@@ -10,7 +10,8 @@ import time
 import urllib
 import urlparse
 from configuration import Configuration
-
+from subprocess import Popen
+from subprocess import PIPE
 
 class UrlRequester:
 
@@ -310,14 +311,14 @@ class IndyApi(UrlRequester):
             response = self.paths_response(wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
                                            mutator, patcherIds, injectedBOMs, resolve)
 
-            self.store_paths_cache(response, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
-                                   mutator, patcherIds, injectedBOMs, resolve)
+            cache_file = self.store_paths_cache(response, sourceKey, roots, targets, excludedSources, excludedSubgraphs,
+                                                 preset, mutator, patcherIds, injectedBOMs, resolve)
 
             # cleanup
             if deleteWS:
                 self.deleteWorkspace(wsid)
 
-        return json.loads(response)
+            return json.loads(self.minimize_paths_json(cache_file))
 
     def paths_nocache(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, mutator,
                       patcherIds, injectedBOMs, resolve=True):
@@ -338,7 +339,7 @@ class IndyApi(UrlRequester):
         if deleteWS:
             self.deleteWorkspace(wsid)
 
-        return json.loads(response)
+        return json.loads(self.minimize_paths_json(raw_content=response))
 
     def paths_response(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, mutator,
                        patcherIds, injectedBOMs, resolve=True):
@@ -518,6 +519,7 @@ class IndyApi(UrlRequester):
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
         :param resolve: flag to tell Indy to run resolve for given roots
+        :returns: the created cache filename
         """
         cache_filename = self.get_urlmap_cache_filename(sourceKey, gavs, addclassifiers, excludedSources,
                                                         excludedSubgraphs, preset, mutator, patcherIds,
@@ -526,6 +528,7 @@ class IndyApi(UrlRequester):
             os.makedirs(self.CACHE_PATH)
         with open(cache_filename, "w") as cache_file:
             cache_file.write(response)
+        return cache_filename
 
     def get_urlmap_cache_filename(self, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset,
                                   mutator, patcherIds, injectedBOMs):
@@ -577,8 +580,7 @@ class IndyApi(UrlRequester):
         cache_filename = self.get_paths_cache_filename(sourceKey, roots, targets, excludedSources, excludedSubgraphs,
                                                        preset, mutator, patcherIds, injectedBOMs)
         if os.path.isfile(cache_filename):
-            with open(cache_filename) as cache_file:
-                return cache_file.read()
+            return self.minimize_paths_json(cache_filename)
         else:
             logging.info("Cache file %s not found.", cache_filename)
             return None
@@ -600,6 +602,7 @@ class IndyApi(UrlRequester):
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
         :param resolve: flag to tell Indy to run resolve for given roots
+        :returns: the created cache filename
         """
         cache_filename = self.get_paths_cache_filename(sourceKey, roots, targets, excludedSources, excludedSubgraphs,
                                                        preset, mutator, patcherIds, injectedBOMs)
@@ -608,6 +611,7 @@ class IndyApi(UrlRequester):
             os.makedirs(cache_dirname)
         with open(cache_filename, "w") as cache_file:
             cache_file.write(response)
+        return cache_filename
 
     def get_paths_cache_filename(self, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset,
                                  mutator, patcherIds, injectedBOMs):
@@ -661,3 +665,28 @@ class IndyApi(UrlRequester):
                 break
 
         return "%s/%s/%s/paths_%s.json" % (self.CACHE_PATH, root_dir, target_dir, cache_filename)
+
+    def minimize_paths_json(self, raw_file=None, raw_content=None):
+        """
+        Drops all whitespace and unused fields from loaded json to allow processing of really large results.
+        Sometimes we have to process a file bigger than 2GB, which is the maximum filesize for json library.
+        By dropping whitespace and unused fields before processing we get around 50% of the original size.
+
+        :param raw_file: the raw json file
+        :returns: shrinked data
+        """
+        if not raw_file and raw_content:
+            temp_file = tempfile.NamedTemporaryFile(delete=False)
+            try:
+                temp_file.write(someStuff)
+                temp_file.close()
+                args = ["./minimize-paths-json.sh", temp_file.name]
+                minimize = Popen(args, stdout=PIPE)
+                minimized = minimize.communicate()[0]
+            finally:
+                os.remove(temp_file.name)
+        else:
+            args = ["./minimize-paths-json.sh", raw_file]
+            minimize = Popen(args, stdout=PIPE)
+            minimized = minimize.communicate()[0]
+        return minimized
