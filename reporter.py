@@ -87,7 +87,7 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
         li = "<li>"
         is_inherited_or_mixin = False
         for rel in path:
-            if "inherited" in rel.extra or "mixin" in rel.extra:
+            if rel.extra and ("inherited" in rel.extra or "mixin" in rel.extra):
                 is_inherited_or_mixin = True
                 break
             dec = rel.declaring
