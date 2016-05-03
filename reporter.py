@@ -279,7 +279,7 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
     html += "</ul><h4>Excluded repositories</h4><ul>"
     if len(config.excludedRepositories):
         for excluded_repo in config.excludedRepositories:
-            html += "<li class=\"excluded\"><a href=\"%(url)s\">%(url)s</li>" % {"url": excluded_repo}
+            html += "<li class=\"excluded\"><a href=\"%(url)s\">%(url)s</a></li>" % {"url": excluded_repo}
     else:
         html += "<li><em>none</em></li>"
     html += "</ul></div>"
