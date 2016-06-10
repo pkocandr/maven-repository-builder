@@ -285,9 +285,8 @@ class IndyApi(UrlRequester):
             logging.debug("Indy urlmap created. Response content:\n%s", responseContent)
             return responseContent
         else:
-            logging.warning("An error occurred while creating Indy urlmap, status code %i, content '%s'.",
-                            response.status, response.read())
-            return "{}"
+            raise RuntimeError("An error occurred while creating Indy urlmap, status code %i, content '%s'."
+                               % (response.status, response.read()))
 
     def paths(self, wsid, sourceKey, roots, targets, excludedSources, excludedSubgraphs, preset, mutator,
               patcherIds, injectedBOMs, resolve=True):
@@ -468,9 +467,8 @@ class IndyApi(UrlRequester):
             logging.debug("Indy paths created. Response content:\n%s", responseContent)
             return responseContent
         else:
-            logging.warning("An error occurred while creating Indy paths, status code %i, content '%s'.",
-                            response.status, response.read())
-            return "{}"
+            raise RuntimeError("An error occurred while creating Indy paths, status code %i, content '%s'."
+                               % (response.status, response.read()))
 
     def get_cached_urlmap(self, sourceKey, gavs, addclassifiers, excludedSources, excludedSubgraphs, preset, mutator,
                           patcherIds, injectedBOMs, resolve):
