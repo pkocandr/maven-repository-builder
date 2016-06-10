@@ -49,6 +49,7 @@ class ArtifactListBuilder:
 
     def __init__(self, configuration):
         self.configuration = configuration
+        self.errors = Queue()
         self.results_lock = Lock()
         self.results = {}
         self.max_threads = 6
@@ -65,8 +66,7 @@ class ArtifactListBuilder:
         for source in self.configuration.artifactSources:
             priority += 1
             pool = pool_dict.setdefault(source['type'], ThreadPool(self.MAX_THREADS_DICT[source['type']]))
-            errors = Queue()
-            pool.apply_async(self._read_artifact_source, args=[source, priority, errors],
+            pool.apply_async(self._read_artifact_source, args=[source, priority],
                              callback=self._add_result)
 
         for pool in pool_dict.values():
@@ -74,28 +74,33 @@ class ArtifactListBuilder:
 
         at_least_1_runs = True
         all_keys = range(1, len(self.configuration.artifactSources) + 1)
+        finished = False
         while at_least_1_runs:
-            time.sleep(1)
+            for i in range(30):
+                time.sleep(1)
 
-            if not errors.empty():
-                for pool in pool_dict.values():
-                    logging.debug("Terminating pool %s", str(pool))
-                    pool.terminate()
-                break
+                if not self.errors.empty():
+                    for pool in pool_dict.values():
+                        logging.debug("Terminating pool %s", str(pool))
+                        pool.terminate()
+                    finished = True
+                    break
 
             at_least_1_runs = False
-            finished = sorted(list(self.results.keys()))
-            if all_keys != finished:
-                logging.debug("Still waiting for priorities %s to finish", str(list(set(all_keys) - set(finished))))
-                at_least_1_runs = True
-                break
+            if not finished:            
+                self.results_lock.acquire()
+                finished = sorted(list(self.results.keys()))
+                self.results_lock.release()
+                if all_keys != finished:
+                    logging.debug("Still waiting for priorities %s to finish", str(list(set(all_keys) - set(finished))))
+                    at_least_1_runs = True
 
         for pool in pool_dict.values():
             if pool._state != multiprocessing.pool.TERMINATE:
                 pool.join()
 
-        if not errors.empty():
-            raise RuntimeError("%i error(s) occured during reading of artifact list." % errors.qsize())
+        if not self.errors.empty():
+            raise RuntimeError("%i error(s) occured during reading of artifact list." % self.errors.qsize())
 
         return self._get_artifact_list()
 
@@ -123,7 +128,7 @@ class ArtifactListBuilder:
 
         return artifactList
 
-    def _read_artifact_source(self, source, priority, errors):
+    def _read_artifact_source(self, source, priority):
         """
         Reads artifact list from the given artifact source.
 
@@ -173,8 +178,8 @@ class ArtifactListBuilder:
             return {priority: artifacts}
         except BaseException as ex:
             tb = traceback.format_exc()
-            logging.error("Error while reading artifacts in priority %i: %s. Traceback\n%s", priority, str(ex), tb)
-            errors.put(ex)
+            logging.error("Error while reading artifacts in priority %i: %s. Traceback\n%s", priority, ex, tb)
+            self.errors.put(ex)
             raise ex
 
     def _filterExcludedGAVs(self, artifacts, excludedGAVs, priority):
@@ -449,12 +454,15 @@ class ArtifactListBuilder:
                 ga = ma.getGA()
                 if not ga in gas:
                     gas.append(ga)
-            if self.configuration.useCache:
-                path_dict = indy.paths(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs, preset,
-                                       mutator, patcherIds, injectedBOMs, False)
-            else:
-                path_dict = indy.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
-                                               preset, mutator, patcherIds, injectedBOMs, False)
+            try:
+                if self.configuration.useCache:
+                    path_dict = indy.paths(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs, preset,
+                                           mutator, patcherIds, injectedBOMs, False)
+                else:
+                    path_dict = indy.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
+                                                   preset, mutator, patcherIds, injectedBOMs, False)
+            except RuntimeError:
+                path_dict = dict()
             if "projects" in path_dict:
                 path_dict = path_dict["projects"]
             if path_dict:
