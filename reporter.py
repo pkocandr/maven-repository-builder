@@ -114,7 +114,10 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
                         else:
                             li += "embeds"
                     else:
-                        li += "depends on (scope %s)" % rel.extra.split(' ', 2)[0]
+                        li += "depends on (scope %s" % rel.extra.split(' ', 2)[0]
+                        if "optional" in rel.extra:
+                            li += " optionally"
+                        li += ")"
                     if "optional" in rel.extra:
                         optional_path = True
                 elif rel_type == "PARENT":
@@ -294,8 +297,8 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
             artifacts = artifactids[artifactid]
             for version in sorted(artifacts.keys()):
                 gav = "%s:%s:%s" % (groupid, artifactid, version)
-                html += "<li><a href=\"pages/artifact_version_{gav_filename}.html\">{gav}</a></li>".format(
-                        gav=gav, gav_filename=gav.replace(":", "$"))
+                html += "<li><a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>".format(
+                        version=version, gav_filename=gav.replace(":", "$"))
             html += "</ul>"
 
     html += "</ul></div>\n<div id=\"tab-malformed-versions\"><h2>Malformed versions</h2><ul>"
@@ -305,7 +308,10 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
             artifacts = artifactids[artifactid]
             for version in sorted(artifacts.keys()):
                 gav = "%s:%s:%s" % (groupid, artifactid, version)
-                html += ("<li><a href=\"pages/artifact_version_{gav_filename}.html\">{gav}</a></li>").format(gav=gav,
+                html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>&nbsp;:&nbsp;" + \
+                         "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>&nbsp;:&nbsp;" + \
+                         "<a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>").format(artifactid=artifactid, groupid=groupid,
+                                                                                                             version=version,
                                                                                                              gav_filename=gav.replace(":", "$"))
 
     html += "</ul></div>\n<div id=\"tab-optional-artifacts\"><h2>Optional artifacts</h2><h3>Direct optionals</h3><ul>"
