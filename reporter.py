@@ -8,6 +8,8 @@ from maven_artifact import MavenArtifact
 from maven_repo_util import slashAtTheEnd
 
 
+COLON_HTML = "<span style=\"margin: 0 0.5em;\">:</span>"
+
 def generate_report(output, config, artifact_list, report_name):
     """
     Generates report. The report consists of a summary page, groupId pages, artifactId pages and leaf artifact pages.
@@ -63,11 +65,11 @@ def generate_artifact_page(ma, roots, paths, repo_url, output, groupids, optiona
     html = ("<html><head><title>Artifact {gav}</title>" + \
             "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"></head><body>" + \
             "<div class=\"header\"><a href=\"../index.html\">Back to repository summary</a></div>" + \
-            "<div class=\"artifact\"><h1>{gav}</h1>" + \
+            "<div class=\"artifact\"><h1>{gav_html}</h1>" + \
             "<p class=\"breadcrumbs\"><a href=\"groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>" + \
-            "&nbsp;:&nbsp;<a href=\"artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>" + \
-            "&nbsp;:&nbsp;{version}</p>" + \
-            "<h2>Paths</h2><ul id=\"paths\">").format(gav=ma.getGAV().replace(":", " : "), groupid=ma.groupId, artifactid=ma.artifactId, version=ma.version)
+            COLON_HTML + "<a href=\"artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>" + \
+            COLON_HTML + "{version}</p>" + \
+            "<h2>Paths</h2><ul id=\"paths\">").format(gav=ma.getGAV().replace(":", " : "), gav_html=format_gav(ma.getGAV()), groupid=ma.groupId, artifactid=ma.artifactId, version=ma.version)
     examples = ""
     if ma.getGAV() in roots:
         li = "<li>"
@@ -158,9 +160,9 @@ def generate_artifactid_page(groupid, artifactid, artifacts, output):
     html = ("<html><head><title>ArtifactId {groupid}:{artifactid}</title>" + \
             "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"></head><body>" + \
             "<div class=\"header\"><a href=\"../index.html\">Back to repository summary</a></div>" + \
-            "<div class=\"artifact\"><h1>{groupid}:{artifactid}</h1>" + \
+            "<div class=\"artifact\"><h1>{groupid}" + COLON_HTML + "{artifactid}</h1>" + \
             "<p class=\"breadcrumbs\"><a href=\"groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>" + \
-            "&nbsp;:&nbsp;<a href=\"artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a></p>" + \
+            COLON_HTML + "<a href=\"artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a></p>" + \
             "<h2>Versions</h2><ul>").format(groupid=groupid, artifactid=artifactid)
     for version in sorted(artifacts.keys()):
         gav = "%s:%s:%s" % (groupid, artifactid, version)
@@ -226,17 +228,16 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
                 ver = ma.version
                 if gid in groupids.keys() and aid in groupids[gid].keys() and ver in groupids[gid][aid]:
                     if ma.is_example():
-                        examples += "<li class=\"error\"><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(
-                                    gid=gid, aid=aid, ver=ver)
+                        examples += "<li class=\"error\"><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}{colon}{aid}{colon}{ver}</a></li>".format(
+                                    gid=gid, aid=aid, ver=ver, colon=COLON_HTML)
                     else:
-                        html += "<li><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(
-                                gid=gid, aid=aid, ver=ver)
+                        html += "<li><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}{colon}{aid}{colon}{ver}</a></li>".format(
+                                gid=gid, aid=aid, ver=ver, colon=COLON_HTML)
                 else:
                     if ma.is_example():
-                        examples += "<li class=\"example\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(gid=gid, aid=aid, ver=ver)
+                        examples += "<li class=\"example\">{gid}{colon}{aid}{colon}{ver}</li>".format(gid=gid, aid=aid, ver=ver, colon=COLON_HTML)
                     else:
-                        html += "<li class=\"error\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(
-                                gid=gid, aid=aid, ver=ver)
+                        html += "<li class=\"error\">{gid}{colon}{aid}{colon}{ver}</li>".format(gid=gid, aid=aid, ver=ver, colon=COLON_HTML)
             html += examples + "</ul><h4>BOMs</h4><ul>"
             if len(artifact_source['injected-boms']):
                 for bom in artifact_source['injected-boms']:
@@ -245,10 +246,11 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
                     aid = ma.artifactId
                     ver = ma.version
                     if gid in groupids.keys() and aid in groupids[gid].keys() and ver in groupids[gid][aid]:
-                        html += "<li><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(gid=gid, aid=aid, ver=ver)
+                        html += "<li><a href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}{colon}{aid}{colon}{ver}</a></li>".format(
+                                gid=gid, aid=aid, ver=ver, colon=COLON_HTML)
                     else:
-                        html += "<li><span class=\"error\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</span></li>".format(
-                                gid=gid, aid=aid, ver=ver)
+                        html += "<li><span class=\"error\">{gid}{colon}{aid}{colon}{ver}</span></li>".format(
+                                gid=gid, aid=aid, ver=ver, colon=COLON_HTML)
             else:
                 html += "<li><em>none</em></li>"
             if len(artifact_source['excluded-subgraphs']):
@@ -259,10 +261,11 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
                     aid = ma.artifactId
                     ver = ma.version
                     if gid in groupids.keys() and aid in groupids[gid].keys() and ver in groupids[gid][aid]:
-                        html += "<li><a class=\"error\" href=\"pages/artifact_version_{gid}${aid}${ver}.html\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</a></li>".format(gid=gid, aid=aid, ver=ver)
+                        html += "<li><a class=\"error\" href=\"pages/artifact_version_{gid}${aid}${ver}.html\">" + \
+                                "{gid}{colon}{aid}{colon}{ver}</a></li>".format(gid=gid, aid=aid, ver=ver, colon=COLON_HTML)
                     else:
-                        html += "<li class=\"excluded\">{gid}&nbsp;:&nbsp;{aid}&nbsp;:&nbsp;{ver}</li>".format(
-                                gid=gid, aid=aid, ver=ver)
+                        html += "<li class=\"excluded\">{gid}{colon}{aid}{colon}{ver}</li>".format(
+                                gid=gid, aid=aid, ver=ver, colon=COLON_HTML)
             if artifact_source['preset'] in ["sob-build", "scope-with-embedded", "requires", "managed-sob-build"]:
                 contents = "runtime dependencies"
             elif artifact_source['preset'] in ["sob", "build-env", "build-requires", "br", "managed-sob"]:
@@ -291,9 +294,9 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
     for groupid in sorted(multiversion_gas.keys()):
         artifactids = multiversion_gas[groupid]
         for artifactid in sorted(artifactids.keys()):
-            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>&nbsp;:&nbsp;" + \
+            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>{colon}" + \
                      "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>" + \
-                     "</li><ul>").format(artifactid=artifactid, groupid=groupid)
+                     "</li><ul>").format(artifactid=artifactid, groupid=groupid, colon=COLON_HTML)
             artifacts = artifactids[artifactid]
             for version in sorted(artifacts.keys()):
                 gav = "%s:%s:%s" % (groupid, artifactid, version)
@@ -308,33 +311,35 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
             artifacts = artifactids[artifactid]
             for version in sorted(artifacts.keys()):
                 gav = "%s:%s:%s" % (groupid, artifactid, version)
-                html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>&nbsp;:&nbsp;" + \
-                         "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>&nbsp;:&nbsp;" + \
+                html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>{colon}" + \
+                         "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>{colon}" + \
                          "<a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>").format(artifactid=artifactid, groupid=groupid,
                                                                                                              version=version,
-                                                                                                             gav_filename=gav.replace(":", "$"))
+                                                                                                             gav_filename=gav.replace(":", "$"),
+                                                                                                             colon=COLON_HTML)
 
     html += "</ul></div>\n<div id=\"tab-optional-artifacts\"><h2>Optional artifacts</h2><h3>Direct optionals</h3><ul>"
     for ma in sorted(optional_artifacts.keys()):
         if optional_artifacts[ma]:
-            gav = "%s&nbsp;:&nbsp;%s&nbsp;:&nbsp;%s" % (ma.groupId, ma.artifactId, ma.version)
             gav_filename = "%s$%s$%s" % (ma.groupId, ma.artifactId, ma.version)
-            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\" class=\"optional\">{groupid}</a>&nbsp;:&nbsp;" + \
-                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\" class=\"optional\">{artifactid}</a> : " + \
+            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\" class=\"optional\">{groupid}</a>{colon}" + \
+                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\" class=\"optional\">{artifactid}</a>{colon}" + \
                      "<a href=\"pages/artifact_version_{gav_filename}.html\" class=\"optional\">{version}</a></li>").format(groupid=ma.groupId,
                                                                                                          artifactid=ma.artifactId,
                                                                                                          version=ma.version,
-                                                                                                         gav_filename=gav_filename)
+                                                                                                         gav_filename=gav_filename,
+                                                                                                         colon=COLON_HTML)
     html += "</ul><h3>Transitive optionals</h3><ul>"
     for ma in sorted(optional_artifacts.keys()):
         if not optional_artifacts[ma]:
             gav_filename = "%s$%s$%s" % (ma.groupId, ma.artifactId, ma.version)
-            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\" class=\"optional\">{groupid}</a> : " + \
-                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\" class=\"optional\">{artifactid}</a> : " + \
+            html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\" class=\"optional\">{groupid}</a>{colon}" + \
+                     "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\" class=\"optional\">{artifactid}</a>{colon}" + \
                      "<a href=\"pages/artifact_version_{gav_filename}.html\" class=\"optional\">{version}</a></li>").format(groupid=ma.groupId,
                                                                                                          artifactid=ma.artifactId,
                                                                                                          version=ma.version,
-                                                                                                         gav_filename=gav_filename)
+                                                                                                         gav_filename=gav_filename,
+                                                                                                         colon=COLON_HTML)
     html += "</ul></div>\n<div id=\"tab-all-artifacts\"><h2>All artifacts</h2><ul>"
     for groupid in sorted(groupids.keys()):
         artifactids = groupids[groupid]
@@ -342,12 +347,17 @@ def generate_summary(config, groupids, multiversion_gas, malformed_versions, out
             artifacts = artifactids[artifactid]
             for version in sorted(artifacts.keys()):
                 gav = "%s:%s:%s" % (groupid, artifactid, version)
-                html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>&nbsp;:&nbsp;" + \
-                         "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a> : " + \
-                         "<a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>").format(groupid=groupid, artifactid=artifactid, version=version, gav_filename=gav.replace(":", "$"))
+                html += ("<li><a href=\"pages/groupid_{groupid}.html\" title=\"GroupId {groupid}\">{groupid}</a>{colon}" + \
+                         "<a href=\"pages/artifactid_{groupid}${artifactid}.html\" title=\"ArtifactId {artifactid}\">{artifactid}</a>{colon}" + \
+                         "<a href=\"pages/artifact_version_{gav_filename}.html\">{version}</a></li>").format(groupid=groupid, artifactid=artifactid,
+                                                                                                             version=version, gav_filename=gav.replace(":", "$"), colon=COLON_HTML)
     html += "</ul></div></div></div></body></html>"
     with open(os.path.join(output, "index.html"), "w") as htmlfile:
         htmlfile.write(html)
+
+
+def format_gav(gav):
+    return gav.replace(":", COLON_HTML)
 
 
 def generate_css(output):
