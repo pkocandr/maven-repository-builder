@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import sys
 import time
 import urllib
 import urlparse
@@ -431,7 +432,7 @@ class IndyApi(UrlRequester):
         :param resolve: flag to tell Indy to run resolve for given roots
         :returns: the response string of the requested paths
         """
-        url = self._indy_url + self.API_PATH + "depgraph/repo/paths"
+        url = self._indy_url + self.API_PATH + "depgraph/graph/paths"
 
         request = {}
         request["workspaceId"] = wsid
@@ -459,7 +460,7 @@ class IndyApi(UrlRequester):
         response = self._postUrl(url, data=data, headers=headers)
 
         if response.status == 404:
-            url = self._indy_url + self.API_PATH + "depgraph/graph/paths"
+            url = self._indy_url + self.API_PATH + "depgraph/repo/paths"
             response = self._postUrl(url, data=data, headers=headers)
 
         if response.status == 200:
@@ -638,31 +639,7 @@ class IndyApi(UrlRequester):
             if len(cache_filename) > 244:
                 cache_filename = sha256.hexdigest()
 
-        root_dir = ""
-        for root in roots:
-            root_filename = root.replace(":", "$")
-            if root_dir:
-                temp = "%s_|_%s" % (root_dir, root_filename)
-            else:
-                temp = root_filename
-            if len(temp) < 255:
-                root_dir = temp
-            else:
-                break
-
-        target_dir = ""
-        for target in targets:
-            target_groupid = re.sub(":.*", "", target)
-            if target_dir:
-                temp = "%s_|_%s" % (target_dir, target_groupid)
-            else:
-                temp = target_groupid
-            if len(temp) < 255:
-                target_dir = temp
-            else:
-                break
-
-        return "%s/%s/%s/paths_%s.json" % (self.CACHE_PATH, root_dir, target_dir, cache_filename)
+        return "%s/paths_%s.json" % (self.CACHE_PATH, cache_filename)
 
     def minimize_paths_json(self, raw_file=None, raw_content=None):
         """
@@ -673,18 +650,19 @@ class IndyApi(UrlRequester):
         :param raw_file: the raw json file
         :returns: shrinked data
         """
+        minimize_path = os.path.join(sys.path[0], "minimize-paths-json.sh")
         if not raw_file and raw_content:
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             try:
                 temp_file.write(someStuff)
                 temp_file.close()
-                args = ["./minimize-paths-json.sh", temp_file.name]
+                args = [minimize_path, temp_file.name]
                 minimize = Popen(args, stdout=PIPE)
                 minimized = minimize.communicate()[0]
             finally:
                 os.remove(temp_file.name)
         else:
-            args = ["./minimize-paths-json.sh", raw_file]
+            args = [minimize_path, raw_file]
             minimize = Popen(args, stdout=PIPE)
             minimized = minimize.communicate()[0]
         return minimized
