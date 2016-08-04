@@ -81,9 +81,9 @@ class MavenArtifact:
 
         ma = MavenArtifact(groupid, artifactid, None, version)
 
-        if ma.get_pom_filename() != path_parts[-1]:
+        if ma.getPomFilename() != path_parts[-1]:
             raise "Found POM filename %s does not match the one generated from the path %s" % (path_parts[-1],
-                                                                                               ma.get_pom_filename())
+                                                                                               ma.getPomFilename())
 
         return ma
 
