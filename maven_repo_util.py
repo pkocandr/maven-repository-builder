@@ -395,7 +395,7 @@ def urlExists(url):
             connection = httplib.HTTPSConnection(parsedUrl[1])
         connection.request('HEAD', parsedUrl[2], headers={"User-Agent": "Python-Maven Repository Builder"})
         response = connection.getresponse()
-        return response.status == 200
+        return response.status in [200, 302]
     else:
         if protocol == 'file':
             url = url[7:]
