@@ -3,7 +3,7 @@ import os
 import re
 import logging
 import traceback
-from indy_apis import IndyApi
+from carto_client import CartoClient
 import multiprocessing.pool
 from multiprocessing.pool import ThreadPool
 from multiprocessing import Lock
@@ -152,7 +152,7 @@ class ArtifactListBuilder:
                                                    source['skip-missing'])
             elif source['type'] == 'dependency-graph':
                 logging.info("Building artifact list from dependency graph of top level GAVs")
-                artifacts = self._listDependencyGraph(source['indy-url'],
+                artifacts = self._listDependencyGraph(source['carto-url'],
                                                       source['wsid'],
                                                       source['source-key'],
                                                       self._parseDepList(source['top-level-gavs']),
@@ -393,27 +393,27 @@ class ArtifactListBuilder:
 
         return artifacts
 
-    def _listDependencyGraph(self, indyUrl, wsid, sourceKey, gavs, excludedSources=[], excludedSubgraphs=[],
+    def _listDependencyGraph(self, cartoUrl, wsid, sourceKey, gavs, excludedSources=[], excludedSubgraphs=[],
                              preset="requires", mutator=None, patcherIds=[], injectedBOMs=[], analyze=False):
         """
         Loads maven artifacts from dependency graph.
 
-        :param indyUrl: URL of the Indy instance
+        :param cartoUrl: URL of the Cartographer instance
         :param wsid: workspace ID
-        :param sourceKey: the Indy artifact source key, consisting of the source type and
+        :param sourceKey: the Cartographer artifact source key, consisting of the source type and
                           its name of the form <{repository|deploy|group}:<name>>
         :param gavs: List of top level GAVs
         :param excludedSources: list of excluded sources' keys
         :param excludedSubgraphs: list of artifacts' GAVs which we want to exclude along with their subgraphs
         :param preset: preset used while creating the urlmap
         :param mutator: mutator used for dependency graph mutation
-        :param patcherIds: list of patcher ID strings for Indy
+        :param patcherIds: list of patcher ID strings for Cartographer
         :param injectedBOMs: list of injected BOMs used with dependency management injection
                              Maven extension
         :returns: Dictionary where index is MavenArtifact object and value is
                   ArtifactSpec with its repo root URL
         """
-        indy = IndyApi(indyUrl)
+        carto = CartoClient(cartoUrl)
 
         if not preset:
             preset = "requires"  # only runtime dependencies
@@ -425,11 +425,11 @@ class ArtifactListBuilder:
 
         # Resolve graph MANIFEST for GAVs
         if self.configuration.useCache:
-            urlmap = indy.urlmap(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
-                                 excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
+            urlmap = carto.urlmap(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
+                                  excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
         else:
-            urlmap = indy.urlmap_nocache(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
-                                         excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
+            urlmap = carto.urlmap_nocache(_wsid, sourceKey, gavs, self.configuration.addClassifiers, excludedSources,
+                                          excludedSubgraphs, preset, mutator, patcherIds, injectedBOMs)
 
         # parse returned map
         artifacts = {}
@@ -456,11 +456,11 @@ class ArtifactListBuilder:
                     gas.append(ga)
             try:
                 if self.configuration.useCache:
-                    path_dict = indy.paths(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs, preset,
-                                           mutator, patcherIds, injectedBOMs, False)
+                    path_dict = carto.paths(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs, preset,
+                                            mutator, patcherIds, injectedBOMs, False)
                 else:
-                    path_dict = indy.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
-                                                   preset, mutator, patcherIds, injectedBOMs, False)
+                    path_dict = carto.paths_nocache(_wsid, sourceKey, gavs, gas, excludedSources, excludedSubgraphs,
+                                                    preset, mutator, patcherIds, injectedBOMs, False)
             except RuntimeError:
                 path_dict = dict()
             if "projects" in path_dict:
@@ -517,7 +517,7 @@ class ArtifactListBuilder:
 
             if not wsid:
                 try:
-                    indy.deleteWorkspace(_wsid)
+                    carto.deleteWorkspace(_wsid)
                 except Exception as err:
                     logging.warning("Workspace deletion failed: %s" % str(err))
 
