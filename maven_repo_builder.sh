@@ -28,6 +28,9 @@ help ()
     echo '                        By default "sources" will be used. There can be a type specified '
     echo '                        with each classifiers separated by colon, e.g. jar:sources.'
     echo '                        The old way of separation of classifiers by colon is deprecated.'
+    echo '  -t THREADNUM'
+    echo '                        Number of download threads per server when downloading artifacts.'
+    echo '                        Default is 5, max is 20.'
     echo '  -r REPO_FILENAME'
     echo '                        Zip the created repository in a file with provided name'
     echo '  -s CHECKSUM_MODE'
@@ -83,7 +86,7 @@ OUTPUT_REPO="maven-repository"
 # =======================================
 # ====== reading command arguments ======
 # =======================================
-while getopts hc:u:r:a:o:b:l:L:s:x:w:O:R:md: OPTION
+while getopts hc:u:r:a:t:o:b:l:L:s:x:w:O:R:md: OPTION
 do
     case "${OPTION}" in
         h) HELP=true;;
@@ -91,6 +94,7 @@ do
         u) URL=${OPTARG};;
         r) REPO_FILE=${OPTARG};;
         a) CLASSIFIERS=${OPTARG};;
+        t) THREADNUM=${OPTARG};;
         s) CHECKSUM_MODE=${OPTARG};;
         x) EXCLUDED_TYPES=${OPTARG};;
         w) GATCV_WHITELIST=${OPTARG};;
@@ -134,6 +138,7 @@ MRB_PARAMS=()
 isvarset CONFIG && MRB_PARAMS+=("-c") && MRB_PARAMS+=("${CONFIG}")
 isvarset URL && MRB_PARAMS+=("-u") && MRB_PARAMS+=("${URL}")
 isvarset CLASSIFIERS && MRB_PARAMS+=("-a") && MRB_PARAMS+=("${CLASSIFIERS}")
+isvarset THREADNUM && MRB_PARAMS+=("-t") && MRB_PARAMS+=("${THREADNUM}")
 isvarset OUTPUT_REPO_DIR && MRB_PARAMS+=("-o") && MRB_PARAMS+=("${OUTPUT_REPO_DIR}")
 isvarset CHECKSUM_MODE && MRB_PARAMS+=("-s") && MRB_PARAMS+=("${CHECKSUM_MODE}")
 isvarset EXCLUDED_TYPES && MRB_PARAMS+=("-x") && MRB_PARAMS+=("${EXCLUDED_TYPES}")
@@ -146,7 +151,7 @@ isvarset LOGFILE && MRB_PARAMS+=("-L") && MRB_PARAMS+=("${LOGFILE}")
 if [ $# -gt 0 ]; then
     while [ $# -gt 0 ] && [ ${1:0:1} = '-' ]; do
         L=${1:1:2}
-        if [ $L = 'c' ] || [ $L = 'r' ] || [ $L = 'a' ] || [ $L = 'o' ] || [ $L = 'b' ] || [ $L = 'u' ] || [ $L = 's' ] || [ $L = 'x' ] || [ $L = 'w' ] || [ $L = 'O' ] || [ $L = 'R' ] || [ $L = 'l' ] || [ $L = 'L' ] || [ $L = 'd' ] ; then
+        if [ $L = 'c' ] || [ $L = 'r' ] || [ $L = 'a' ] || [ $L = 't' ] || [ $L = 'o' ] || [ $L = 'b' ] || [ $L = 'u' ] || [ $L = 's' ] || [ $L = 'x' ] || [ $L = 'w' ] || [ $L = 'O' ] || [ $L = 'R' ] || [ $L = 'l' ] || [ $L = 'L' ] || [ $L = 'd' ] ; then
             shift
         fi
         shift

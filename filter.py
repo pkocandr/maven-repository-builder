@@ -11,7 +11,7 @@ class Filter:
     def __init__(self, config):
         self.config = config
 
-    def filter(self, artifactList):
+    def filter(self, artifactList, threadnum):
         """
         Filter artifactList removing excluded GAVs, duplicates and GAVs that exists in
         excluded repositories.
@@ -32,7 +32,7 @@ class Filter:
             artifactList = self._filterMultipleVersions(artifactList)
 
         if self.config.excludedRepositories:
-            artifactList = self._filterExcludedRepositories(artifactList)
+			artifactList = self._filterExcludedRepositories(artifactList, threadnum)
 
         return artifactList
 
@@ -147,7 +147,7 @@ class Filter:
                 del artifactList[ga]
         return artifactList
 
-    def _filterExcludedRepositories(self, artifactList):
+    def _filterExcludedRepositories(self, artifactList, threadnum):
         """
         Filter artifactList removing artifacts existing in specified repositories.
 
@@ -157,7 +157,7 @@ class Filter:
 
         logging.debug("Filtering artifacts contained in excluded repositories.")
 
-        pool = ThreadPool(maven_repo_util.MAX_THREADS)
+        pool = ThreadPool(threadnum)
         # Contains artifact to be removed
         delArtifacts = []
         for ga in artifactList.keys():
