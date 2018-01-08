@@ -15,9 +15,6 @@ from subprocess import PIPE
 from xml.etree.ElementTree import ElementTree
 
 
-# Constants
-MAX_THREADS = 10
-
 _regexGATCVS = None
 
 

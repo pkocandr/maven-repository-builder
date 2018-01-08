@@ -25,6 +25,12 @@ def main():
              'by colon, e.g. sources:jar.'
     )
     cliOptParser.add_option(
+        '-t', '--threadnum',
+        type="int",
+        default=5,
+        help='Number of download threads per server when downloading artifacts. Default is 5, max is 20.'
+    )
+    cliOptParser.add_option(
         '-x', '--excludedtypes',
         default='zip:ear:war:tar:gz:tar.gz:bz2:tar.bz2:7z:tar.7z',
         help='Colon-separated list of filetypes to exclude. Defaults to '
@@ -64,6 +70,12 @@ def main():
         help='Set the file in which the log output should be written.'
     )
     (options, args) = cliOptParser.parse_args()
+    if options.threadnum < 1:
+        logging.warn("Thread number cannot be lower than 1. Using 1.")
+        options.threadnum = 1
+    elif options.threadnum > 20:
+        logging.warn("Thread number cannot be higher than 20. Using 20.")
+        options.threadnum = 20
 
     # Set the log level
     maven_repo_util.setLogLevel(options.loglevel, options.logfile)
@@ -126,7 +138,7 @@ def _generateArtifactList(options, args):
     #filter list
     logging.info("Filtering artifact list...")
     listFilter = Filter(config)
-    artifactList = listFilter.filter(artifactList)
+    artifactList = listFilter.filter(artifactList, options.threadnum)
 
     logging.debug("Filtered list contents:")
     _logAL(artifactList)

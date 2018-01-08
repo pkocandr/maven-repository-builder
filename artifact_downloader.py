@@ -62,7 +62,7 @@ def depListToArtifactList(depList):
     return artifactList
 
 
-def fetchArtifactList(remoteRepoUrl, localRepoDir, artifactList, checksumMode):
+def fetchArtifactList(remoteRepoUrl, localRepoDir, artifactList, checksumMode, threadnum):
     """Create a Maven repository based on a remote repository url and a list of artifacts"""
     logging.info('Retrieving artifacts from repository: %s', remoteRepoUrl)
     if not os.path.exists(localRepoDir):
@@ -73,7 +73,7 @@ def fetchArtifactList(remoteRepoUrl, localRepoDir, artifactList, checksumMode):
 
     if protocol == 'http' or protocol == 'https':
         # Create thread pool
-        pool = ThreadPool(maven_repo_util.MAX_THREADS)
+        pool = ThreadPool(threadnum)
         errors = Queue()
         mkdirLock = Lock()
         filesetLock = Lock()
@@ -106,10 +106,10 @@ def fetchArtifactList(remoteRepoUrl, localRepoDir, artifactList, checksumMode):
         logging.error('Unknown protocol: %s', protocol)
 
 
-def fetchArtifactLists(urlToMAList, outputDir, checksumMode):
+def fetchArtifactLists(urlToMAList, outputDir, checksumMode, threadnum):
     """
     Fetch lists of artifacts each list from its repository.
     """
     for repoUrl in urlToMAList.keys():
         artifacts = urlToMAList[repoUrl]
-        fetchArtifactList(repoUrl, outputDir, artifacts, checksumMode)
+        fetchArtifactList(repoUrl, outputDir, artifacts, checksumMode, threadnum)
