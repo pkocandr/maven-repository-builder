@@ -19,8 +19,8 @@ help ()
     echo '                        Local output directory for the new repository. By default'
     echo '                        "local-maven-repository" will be used.'
     echo '  -b OUTPUT_REPO'
-    echo '                        Name of directory in which will be the artifracts'
-    echo '                        contained in the output direcotry. It can be empty or'
+    echo '                        Name of directory in which will be the artifacts'
+    echo '                        contained in the output directory. It can be empty or'
     echo '                        multi-level path, e.g. path/to/repo. Defaults to'
     echo '                        "maven-repository".'
     echo '  -a CLASSIFIERS'
@@ -61,6 +61,15 @@ help ()
     echo '  -d ADDITION'
     echo '                        Directory containing additional files for the repository.'
     echo '                        Content of directory ADDITION will be copied to the repository.'
+    echo '  -n'
+    echo '                        Adhere to the legacy nested structure of the maven repository zip,'
+    echo '                        in which the maven-repository directory and the extras files were nested'
+    echo '                        under a parent directory.'
+    echo '                        With the new specification the maven-repository directory should now'
+    echo '                        become the root of the zip. This has now become the default behaviour'
+    echo '                        of the generator script.'
+    echo '                        This flag has been added to maintain backwards compatibility and allow'
+    echo '                        the script to revert back to the former repository structure'
     echo ''
 }
 
@@ -82,11 +91,12 @@ HELP=false
 METADATA=false
 OUTPUT_DIR="local-maven-repository"
 OUTPUT_REPO="maven-repository"
+NESTED=false
 
 # =======================================
 # ====== reading command arguments ======
 # =======================================
-while getopts hc:u:r:a:t:o:b:l:L:s:x:w:O:R:md: OPTION
+while getopts hc:u:r:a:t:o:b:l:L:s:x:w:O:R:md:n OPTION
 do
     case "${OPTION}" in
         h) HELP=true;;
@@ -106,6 +116,7 @@ do
         l) LOGLEVEL=${OPTARG};;
         L) LOGFILE=${OPTARG};;
         d) ADDITION=${OPTARG};;
+        n) NESTED=true;;
     esac
 done
 
@@ -184,8 +195,17 @@ if [ ! -z ${REPO_FILE} ]; then
         mkdir -p "${REPO_FILE_DIR}"
     fi
     ABS_REPO_FILE=$(cd "${REPO_FILE_DIR}" && pwd -P)/$(basename ${REPO_FILE})
-    cd `dirname ${OUTPUT_DIR}`
-    zip -qr ${ABS_REPO_FILE} $(basename ${OUTPUT_DIR})
+
+    if ${NESTED}; then
+        cd `dirname ${OUTPUT_DIR}`
+        zip -qr ${ABS_REPO_FILE} $(basename ${OUTPUT_DIR})
+    else
+        # Zip inside the output directory to avoid a nested structure. If OUTPUT_REPO
+        # is default value (of maven-repository) this zip will have the correct structure.
+        cd ${OUTPUT_DIR}
+        zip -qr ${ABS_REPO_FILE} *
+    fi
+
     cd $WORKDIR
 fi
 if [ ! -z ${REPORT_FILE} ]; then
