@@ -23,9 +23,9 @@ Maven Repository Builder Usage
 ------------------------------
 
     Usage:
-        maven_repo_builder.sh -u URL [-r REPO_FILENAME] [-m] [-o OUTPUT] [-b OUTPUT_REPO] [-a CLASSIFIERS] [-s CHECKSUM_MODE] [-x EXCLUDED_TYPES] [-d ADDITION] FILE...
+        maven_repo_builder.sh -u URL [-r REPO_FILENAME] [-m] [-n] [-o OUTPUT] [-b OUTPUT_REPO] [-a CLASSIFIERS] [-s CHECKSUM_MODE] [-x EXCLUDED_TYPES] [-d ADDITION] FILE...
         or
-        maven_repo_builder.sh -c CONFIG [-r REPO_FILENAME] [-m] [-o OUTPUT] [-b OUTPUT_REPO] [-a CLASSIFIERS] [-s CHECKSUM_MODE] [-x EXCLUDED_TYPES] [-d ADDITION]
+        maven_repo_builder.sh -c CONFIG [-r REPO_FILENAME] [-m] [-n] [-o OUTPUT] [-b OUTPUT_REPO] [-a CLASSIFIERS] [-s CHECKSUM_MODE] [-x EXCLUDED_TYPES] [-d ADDITION]
 
     Generate a Maven repository based on a file (or files) containing a list of artifacts.  Each list file must contain
     a single artifact per line in the format groupId:artifactId:fileType:<classifier>:version The example artifact list
@@ -74,6 +74,15 @@ Maven Repository Builder Usage
       -d ADDITION
                             Directory containing additional files for the repository.
                             Content of directory ADDITION will be copied to the repository.
+      -n
+                            Adhere to the legacy nested structure of the maven repository zip,
+                            in which the maven-repository directory and the extras files were nested
+                            under a parent directory.
+                            With the new specification the maven-repository directory should now
+                            become the root of the zip. This has now become the default behaviour
+                            of the generator script.
+                            This flag has been added to maintain backwards compatibility and allow
+                            the script to revert back to the former repository structure
 
 
 ### Example Repository List
