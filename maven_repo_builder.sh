@@ -62,14 +62,9 @@ help ()
     echo '                        Directory containing additional files for the repository.'
     echo '                        Content of directory ADDITION will be copied to the repository.'
     echo '  -n'
-    echo '                        Adhere to the legacy nested structure of the maven repository zip,'
+    echo '                        Disable producing a nested structure for the maven repository zip,'
     echo '                        in which the maven-repository directory and the extras files were nested'
     echo '                        under a parent directory.'
-    echo '                        With the new specification the maven-repository directory should now'
-    echo '                        become the root of the zip. This has now become the default behaviour'
-    echo '                        of the generator script.'
-    echo '                        This flag has been added to maintain backwards compatibility and allow'
-    echo '                        the script to revert back to the former repository structure'
     echo ''
 }
 
@@ -91,7 +86,7 @@ HELP=false
 METADATA=false
 OUTPUT_DIR="local-maven-repository"
 OUTPUT_REPO="maven-repository"
-NESTED=false
+NESTED=true
 
 # =======================================
 # ====== reading command arguments ======
@@ -116,7 +111,7 @@ do
         l) LOGLEVEL=${OPTARG};;
         L) LOGFILE=${OPTARG};;
         d) ADDITION=${OPTARG};;
-        n) NESTED=true;;
+        n) NESTED=false;;
     esac
 done
 
