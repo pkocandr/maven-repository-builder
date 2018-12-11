@@ -48,7 +48,7 @@ Maven Repository Builder Usage
                             output direcotry. It can be empty or multi-level path,
                             e.g. path/to/repo. Defaults to "maven-repository".
       -a CLASSIFIERS
-                            Colon-separated list of additional classifiers to download.
+                            Comma-separated list of additional classifiers to download.
                             By default "sources" will be used. It is possible to use
                             "__all__" to request all available classifiers (works only when
                             artifact list is generated from config). There can be a type
@@ -75,14 +75,10 @@ Maven Repository Builder Usage
                             Directory containing additional files for the repository.
                             Content of directory ADDITION will be copied to the repository.
       -n
-                            Adhere to the legacy nested structure of the maven repository zip,
+                            Disable producing a nested structure for the maven repository zip,
                             in which the maven-repository directory and the extras files were nested
                             under a parent directory.
-                            With the new specification the maven-repository directory should now
-                            become the root of the zip. This has now become the default behaviour
-                            of the generator script.
-                            This flag has been added to maintain backwards compatibility and allow
-                            the script to revert back to the former repository structure
+
 
 
 ### Example Repository List
