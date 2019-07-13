@@ -10,6 +10,7 @@ from multiprocessing import Lock
 from multiprocessing import Queue
 from subprocess import Popen
 from subprocess import PIPE
+import requests
 
 import maven_repo_util
 from maven_artifact import MavenArtifact
@@ -553,6 +554,9 @@ class ArtifactListBuilder:
             elif protocol == 'http' or protocol == 'https':
                 for prefix in prefixes:
                     artifacts.update(self._listRemoteRepository(urlWithSlash, classifiersFilter, prefix))
+            elif protocol == 'indy' or protocol == 'indys':
+                for prefix in prefixes:
+                    artifacts.update(self._listIndyRepository(urlWithSlash, classifiersFilter, prefix))
             else:
                 raise "Invalid protocol!", protocol
 
@@ -671,6 +675,72 @@ class ArtifactListBuilder:
             self._addArtifact(artifacts, gav[0], gav[1], gav[2], gavExtClass[gav], suffixes.get(gav), repoUrl)
         return artifacts
 
+    def _listIndyRepository(self, repoUrl, classifiersFilter, prefix=""):
+        logging.debug("Listing Indy remote repository %s prefix '%s'", repoUrl, prefix)
+        url = repoUrl.replace('indy://', 'http://').replace('indys://', 'https://') + prefix
+
+        try:
+            response = requests.get(url)
+            if response.status_code != 200:
+                logging.warning("Cannot retrieve listing for: " + url + ". Error: " + str(response))
+                return {}
+            else:
+                out = response.json()
+                # logging.debug(out)
+        except IOError as err:
+            if prefix:
+                logging.warning(str(err))
+                out = {}
+            else:
+                raise err
+
+        # ^/(groupId)/(artifactId)/(version)/(filename)$
+        regexGAVF = re.compile(r'/(.+)/([^/]+)/([^/]+)/([^/]+\.[^/.]+)$')
+        gavExtClass = {}  # { (g,a,v): {ext: set([class])} }
+        suffixes = {}     # { (g,a,v): suffix }
+
+        listings = out.get('listingUrls')
+        # logging.debug(listings)
+        if listings is None or len(listings) < 1:
+            logging.warning("No results from: " + url)
+            return {}
+
+        for listing in listings:
+            line = listing['path']
+            # logging.debug("Process listing: " + line)
+            if (line):
+                gavf = regexGAVF.match(line)
+                # if gavf is None:
+                #     logging.debug("No GAVTC match for: " + line)
+                # else:
+                if gavf is not None:
+                    # logging.debug("Group 1 of regex: " + gavf.group(1))
+                    groupId = gavf.group(1).replace('/', '.')
+                    artifactId = gavf.group(2)
+                    version = gavf.group(3)
+                    filename = gavf.group(4)
+
+                    # logging.debug("Found G: %s, A: %s, V: %s, F: %s" % (groupId, artifactId, version, filename))
+
+                    if filename in self.IGNORED_REPOSITORY_FILES:
+                        # logging.debug( "Ignoring: " + filename )
+                        continue
+
+                    (extsAndClass, suffix) = self._getExtensionsAndClassifiers(artifactId, version, [filename])
+
+                    gav = (groupId, artifactId, version)
+
+                    gavExtClass.setdefault(gav, {})
+                    self._updateExtensionsAndClassifiers(gavExtClass[gav], extsAndClass, classifiersFilter.get(gav))
+
+                    if suffix is not None and (gav not in suffixes or suffixes[gav] < suffix):
+                        suffixes[gav] = suffix
+
+        artifacts = {}
+        for gav in gavExtClass:
+            self._addArtifact(artifacts, gav[0], gav[1], gav[2], gavExtClass[gav], suffixes.get(gav), repoUrl)
+        return artifacts
+
     def _listLocalRepository(self, directoryPath, prefix=""):
         """
         Loads maven artifacts from local directory.
@@ -765,7 +835,6 @@ class ArtifactListBuilder:
         if mavenArtifact in artifacts:
             artifacts[mavenArtifact].merge(ArtifactSpec(url, artTypes))
         else:
-            logging.debug("Adding artifact %s", str(mavenArtifact))
             artifacts[mavenArtifact] = ArtifactSpec(url, artTypes)
 
     def _containsMainArtifact(self, extsAndClass):
